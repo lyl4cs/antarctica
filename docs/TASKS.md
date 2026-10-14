@@ -10,8 +10,9 @@
 - Infra: setup + deploy scripts (Cloud Run, Pub/Sub push, DLQ, Secret Manager), Cloud Build
 - Scan history endpoint (`GET /sites/scans`), before/after `scripts/measure.py` (median of N runs)
 - Eval draft builder `scripts/build_cases.py`, minimal web UI at `/`
-- 26 offline tests + CI
-- 9 Postgres/pgvector integration tests (incl. concurrent-delivery lock test), own CI job
+- 33 offline tests + CI
+- React frontend (`frontend/`, Vite, Vercel) with 44 vitest tests and its own CI job
+- 10 Postgres/pgvector integration tests (incl. concurrent-delivery lock test), own CI job
 
 ## Owner tasks (only you can do these)
 1. GitHub repo, Neon, GCP project + **$20 budget alert**, `setup_gcp.sh`, `deploy.sh` (docs/SETUP.md)
@@ -40,3 +41,6 @@
 
 ### A6: GitHub Action (stretch) ✅ DONE
 > Read AGENTS.md first. Create `action/action.yml` (a composite action) that scans a preview URL on each PR, comments the score and top 3 fixes, and fails if the score drops more than a threshold versus the last scan. Document usage in README.
+
+### A7: Frontend ✅ DONE
+> Read AGENTS.md first. Build the production frontend from the Claude Design files (now in `docs/design/`): Vite + React + TypeScript in `frontend/`, React Router, plain CSS, typed API client. Routes `/`, `/scans/:id` (poll every 2 s), `/scans/:id/report` (lazy AI fixes), `/history?url=`. Backend: CORS from `CORS_ORIGINS`, `GET /scans` for recent scans, `FRONTEND_ORIGIN` in `deploy.sh`. Vitest tests + a CI job. Deploy notes for Vercel.

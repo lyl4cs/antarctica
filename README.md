@@ -19,7 +19,7 @@ client ──POST /scans──▶ API (Cloud Run) ──publish──▶ Pub/Sub
 ## Run locally (no cloud needed)
 ```bash
 pip install -e ".[dev,ai]"
-python -m pytest -q                         # 26 offline tests (DB tests skip)
+python -m pytest -q                         # 33 offline tests (DB tests skip)
 uvicorn services.api.main:app --reload      # in-memory store + queue
 ```
 
@@ -29,6 +29,16 @@ docker compose up -d
 export TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/antarctica_test
 python -m pytest tests/integration -q
 ```
+
+## Frontend
+A React + TypeScript app in [`frontend/`](frontend/) (Vite, hosted on Vercel), built from the Claude Design files in [`docs/design/`](docs/design/). Start a scan, watch it run, read the report and ask for AI fixes, and compare any two scans of a site over time. It polls the API every 2 s while a scan runs.
+```bash
+uvicorn services.api.main:app --reload --port 8000   # terminal 1
+cd frontend && npm ci && npm run dev                  # terminal 2 -> http://localhost:5173
+```
+Deploying to Vercel, and why it's a separate app instead of being served by FastAPI: [frontend/README.md](frontend/README.md), ADR 014.
+
+The API still serves the older single-file UI at `/` (`services/api/static/index.html`); it is kept as a no-build fallback and is covered by a test.
 
 ## GitHub Action: perf check on every PR
 Scans your preview deploy, comments the score + top 3 fixes on the PR (one comment, updated on re-runs), and fails if the score drops more than `threshold` points below the baseline.
@@ -53,4 +63,4 @@ Outputs: `score`, `baseline`, `passed`. Logic lives in `scripts/pr_check.py` (st
 See [docs/SETUP.md](docs/SETUP.md). Design decisions and tradeoffs: [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Layout
-`services/` (API, scanner worker, shared store/queue) · `core/` (LLM clients, RAG, fix suggester, evals) · `infra/` (gcloud scripts) · `db/migrations/` · `scripts/` (doc fetch/ingest)
+`services/` (API, scanner worker, shared store/queue) · `core/` (LLM clients, RAG, fix suggester, evals) · `frontend/` (React app, Vercel) · `infra/` (gcloud scripts) · `db/migrations/` · `scripts/` (doc fetch/ingest) · `docs/design/` (approved UI designs)

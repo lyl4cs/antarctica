@@ -65,3 +65,11 @@ This file is your interview prep: "why did you choose X?" gets answered here.
 **Decision:** The GitHub Action compares the preview's score against the newest finished scan of `baseline-url` (usually production), and falls back to plain Lighthouse findings if the AI endpoint errors.
 **Why:** Preview deploys get a fresh URL per PR, so "last scan of this URL" usually doesn't exist; production is the real comparison. And a perf gate shouldn't go red because Gemini had a bad minute: only the *score* can fail the check.
 **Tradeoff:** Lighthouse is noisy (±3–5 points run to run), so the default threshold is 5. A single-run gate will occasionally flake; raising the threshold or scanning 3× and taking the median (like `scripts/measure.py`) are the fixes if it does.
+
+## 014: React + Vite SPA on Vercel, polling for scan status
+**Decision:** The UI is a separate single-page app (`frontend/`: React, TypeScript, Vite) deployed on Vercel. It talks to the Cloud Run API over HTTPS with CORS (origins from `CORS_ORIGINS`), and it tracks a running scan by polling `GET /scans/{id}` every 2 seconds.
+**Why a separate app instead of FastAPI serving the files:** The API container stays a pure JSON service: no Node build inside the Python image, and a UI change doesn't redeploy (or cold-start) the API. Vercel serves static files from a CDN for free with preview URLs per PR, which also gives the A6 GitHub Action real preview deploys to scan. Cloud Run would bill request time for every JS file.
+**Why polling:** A scan changes state about three times in 30–60 s. Polling is ~30 small GETs, works through any proxy, and keeps the API stateless. WebSockets/SSE would hold a connection per viewer on Cloud Run (billed per request-second, with timeouts) for three updates. Revisit if updates become frequent or many people watch the same scan.
+**Gave up:** A second deploy target and CORS to configure (`FRONTEND_ORIGIN` in `deploy.sh`), and status shows up to 2 s late.
+**Practice:** *Keep the API boring: JSON in, JSON out. Let the CDN serve the UI.*
+
