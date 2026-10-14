@@ -77,6 +77,58 @@ def test_site_history_newest_first_with_scores(ctx, scan_result):
     assert hist[0]["performance_score"] is None and hist[1]["performance_score"] == 47
 
 
+def test_recent_scans_across_urls_newest_first(ctx, scan_result):
+    client, store, _ = ctx
+    a = client.post("/scans", json={"url": "https://a.com"}).json()["id"]
+    store.save_result(a, scan_result.report, scan_result.raw, scan_result.duration_ms)
+    b = client.post("/scans", json={"url": "https://b.com"}).json()["id"]
+    c = client.post("/scans", json={"url": "https://a.com"}).json()["id"]
+
+    res = client.get("/scans")
+    assert res.status_code == 200  # not swallowed by GET /scans/{scan_id}
+    recent = res.json()
+    assert [r["scan"]["id"] for r in recent] == [c, b, a]
+    assert [r["performance_score"] for r in recent] == [None, None, 47]
+    assert [r["scan"]["id"] for r in client.get("/scans?limit=2").json()] == [c, b]
+    assert len(client.get("/scans?limit=0").json()) == 1  # clamped to at least 1
+
+
+def test_recent_scans_empty(ctx):
+    client, _, _ = ctx
+    assert client.get("/scans").json() == []
+
+
+def test_cors_allows_configured_frontend_origin(ctx):
+    client, _, _ = ctx
+    origin = "http://localhost:5173"  # default CORS_ORIGINS
+    pre = client.options("/scans", headers={
+        "Origin": origin, "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "content-type",
+    })
+    assert pre.status_code == 200
+    assert pre.headers["access-control-allow-origin"] == origin
+    res = client.get("/healthz", headers={"Origin": origin})
+    assert res.headers["access-control-allow-origin"] == origin
+
+
+def test_cors_rejects_unknown_origin(ctx):
+    client, _, _ = ctx
+    res = client.get("/healthz", headers={"Origin": "https://evil.example"})
+    assert res.status_code == 200  # CORS is enforced by the browser, not the server...
+    assert "access-control-allow-origin" not in res.headers  # ...which needs this header
+
+
+def test_cors_origins_parsing(monkeypatch):
+    from services.common.config import get_settings, parse_origins
+
+    assert parse_origins(" https://a.vercel.app/ ,,http://localhost:5173") == (
+        "https://a.vercel.app", "http://localhost:5173")
+    monkeypatch.setenv("CORS_ORIGINS", "https://x.dev,https://y.dev")
+    assert get_settings().cors_origins == ("https://x.dev", "https://y.dev")
+    monkeypatch.delenv("CORS_ORIGINS")
+    assert get_settings().cors_origins == ("http://localhost:5173",)
+
+
 def test_index_page_served(ctx):
     client, _, _ = ctx
     res = client.get("/")

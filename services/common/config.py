@@ -9,6 +9,17 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
+DEFAULT_CORS_ORIGINS = "http://localhost:5173"
+
+
+def parse_origins(raw: str) -> tuple[str, ...]:
+    """Split a comma-separated CORS_ORIGINS value into clean origins.
+
+    Browsers send the Origin header without a trailing slash, so we strip one if the
+    owner pasted it (e.g. 'https://app.vercel.app/'), and drop empty entries.
+    """
+    return tuple(o.strip().rstrip("/") for o in raw.split(",") if o.strip())
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -19,6 +30,8 @@ class Settings:
     embed_model: str
     llm_model: str
     max_scan_attempts: int
+    # Origins allowed to call the API from a browser (the React frontend). See ADR 014.
+    cors_origins: tuple[str, ...]
 
 
 def get_settings() -> Settings:
@@ -30,4 +43,5 @@ def get_settings() -> Settings:
         embed_model=os.environ.get("VERTEX_EMBED_MODEL", "text-embedding-005"),
         llm_model=os.environ.get("VERTEX_LLM_MODEL", "gemini-2.5-flash"),
         max_scan_attempts=int(os.environ.get("MAX_SCAN_ATTEMPTS", "3")),
+        cors_origins=parse_origins(os.environ.get("CORS_ORIGINS", DEFAULT_CORS_ORIGINS)),
     )

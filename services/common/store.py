@@ -36,6 +36,7 @@ class Store(Protocol):
     def mark_failed(self, scan_id: str, error: str) -> None: ...
     def get_report(self, scan_id: str) -> Report | None: ...
     def list_scans(self, url: str, limit: int = 20) -> list[ScanSummary]: ...
+    def list_recent(self, limit: int = 20) -> list[ScanSummary]: ...
 
 
 class InMemoryStore:
@@ -84,12 +85,7 @@ class InMemoryStore:
             findings=findings,
         )
 
-
-    def list_scans(self, url: str, limit: int = 20) -> list[ScanSummary]:
-        scans = sorted(
-            (sc for sc in self.scans.values() if sc.url == url),
-            key=lambda sc: sc.created_at, reverse=True,
-        )[:limit]
+    def _summaries(self, scans: list[Scan]) -> list[ScanSummary]:
         return [
             ScanSummary(
                 scan=sc,
@@ -99,6 +95,17 @@ class InMemoryStore:
             )
             for sc in scans
         ]
+
+    def list_scans(self, url: str, limit: int = 20) -> list[ScanSummary]:
+        scans = sorted(
+            (sc for sc in self.scans.values() if sc.url == url),
+            key=lambda sc: sc.created_at, reverse=True,
+        )[:limit]
+        return self._summaries(scans)
+
+    def list_recent(self, limit: int = 20) -> list[ScanSummary]:
+        scans = sorted(self.scans.values(), key=lambda sc: sc.created_at, reverse=True)[:limit]
+        return self._summaries(scans)
 
 
 class PostgresStore:  # pragma: no cover - exercised against a real DB
@@ -207,13 +214,21 @@ class PostgresStore:  # pragma: no cover - exercised against a real DB
             findings=[StoredFinding(**dict(zip(keys, r))) for r in rows],
         )
 
-    def list_scans(self, url: str, limit: int = 20) -> list[ScanSummary]:
+    def _summaries(self, where: str, params: tuple, limit: int) -> list[ScanSummary]:
+        """Scans joined to their score. LEFT JOIN because queued/running/failed scans
+        have no audits row yet; they still belong in the list, with score None."""
         cols = ", ".join(f"s.{c.strip()}" for c in self._SCAN_COLS.split(","))
         with self._conn() as c:
             rows = c.execute(
                 f"""SELECT {cols}, a.performance_score FROM scans s
                     LEFT JOIN audits a ON a.scan_id = s.id
-                    WHERE s.url = %s ORDER BY s.created_at DESC LIMIT %s""",
-                (url, limit),
+                    {where} ORDER BY s.created_at DESC LIMIT %s""",
+                (*params, limit),
             ).fetchall()
         return [ScanSummary(scan=self._row_to_scan(r[:-1]), performance_score=r[-1]) for r in rows]
+
+    def list_scans(self, url: str, limit: int = 20) -> list[ScanSummary]:
+        return self._summaries("WHERE s.url = %s", (url,), limit)
+
+    def list_recent(self, limit: int = 20) -> list[ScanSummary]:
+        return self._summaries("", (), limit)
