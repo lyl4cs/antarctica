@@ -73,3 +73,9 @@ This file is your interview prep: "why did you choose X?" gets answered here.
 **Gave up:** A second deploy target and CORS to configure (`FRONTEND_ORIGIN` in `deploy.sh`), and status shows up to 2 s late.
 **Practice:** *Keep the API boring: JSON in, JSON out. Let the CDN serve the UI.*
 
+## 015: MCP server wraps the HTTP API over stdio
+**Decision:** The MCP server is a thin client of the public API (not the database), launched by the assistant over stdio.
+**Why:** One code path for every client (web UI, GitHub Action, MCP), no database credentials on laptops, and stdio needs no port or auth for local use. Tool results are trimmed (seconds, top findings, deduped sources) because tool output spends the model's context.
+**Tradeoff:** `run_audit` blocks for up to ~90 s while the scan runs. Fine for an assistant conversation; a remote multi-user deployment would switch to streamable HTTP with auth and return the scan id immediately instead.
+**Known gap:** the API itself is unauthenticated, so anyone with the URL can trigger scans and paid fix calls. Acceptable for a portfolio project with a budget alert; the fix is an API key or IAP in front of Cloud Run.
+

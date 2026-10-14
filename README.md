@@ -59,8 +59,11 @@ jobs:
 ```
 Outputs: `score`, `baseline`, `passed`. Logic lives in `scripts/pr_check.py` (stdlib only, unit-tested).
 
+## MCP server: use it from Claude / Cursor
+`antarctica-mcp` exposes `run_audit`, `get_report`, `suggest_fixes`, `site_history` as MCP tools over stdio. Setup for Claude Desktop and Claude Code: [docs/MCP.md](docs/MCP.md).
+
 ## Deploy
 See [docs/SETUP.md](docs/SETUP.md). Design decisions and tradeoffs: [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Layout
-`services/` (API, scanner worker, shared store/queue) · `core/` (LLM clients, RAG, fix suggester, evals) · `frontend/` (React app, Vercel) · `infra/` (gcloud scripts) · `db/migrations/` · `scripts/` (doc fetch/ingest) · `docs/design/` (approved UI designs)
+`services/` (API, scanner worker, shared store/queue) · `core/` (LLM clients, RAG, fix suggester, evals) · `frontend/` (React app, Vercel) · `mcp_server/` (MCP tools) · `infra/` (gcloud scripts) · `db/migrations/` · `scripts/` (doc fetch/ingest) · `docs/design/` (approved UI designs)

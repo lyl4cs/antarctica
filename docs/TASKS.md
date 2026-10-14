@@ -44,3 +44,10 @@
 
 ### A7: Frontend ✅ DONE
 > Read AGENTS.md first. Build the production frontend from the Claude Design files (now in `docs/design/`): Vite + React + TypeScript in `frontend/`, React Router, plain CSS, typed API client. Routes `/`, `/scans/:id` (poll every 2 s), `/scans/:id/report` (lazy AI fixes), `/history?url=`. Backend: CORS from `CORS_ORIGINS`, `GET /scans` for recent scans, `FRONTEND_ORIGIN` in `deploy.sh`. Vitest tests + a CI job. Deploy notes for Vercel.
+
+### A8: MCP server ✅ DONE
+> `mcp_server/server.py`: run_audit, get_report, suggest_fixes, site_history over stdio; in-process client tests. Setup: docs/MCP.md.
+
+### A9: ADK agent (next)
+> Google ADK agent (Gemini) that uses the same four tools in a ReAct loop: audit -> pick worst finding -> get fix -> summarize a prioritized plan. Trace each step (tool, latency, tokens).
+
