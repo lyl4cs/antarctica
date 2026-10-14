@@ -56,3 +56,16 @@ jobs:
       - run: npm run typecheck
       - run: npm test -- --run
       - run: npm run build
+
+  # ADK agent: own environment (google-adk pins an older opentelemetry than the
+  # main package's Pub/Sub client). The main package is installed with --no-deps
+  # only so the test can launch the real MCP server (it needs just `mcp`).
+  agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12" }
+      - run: pip install -e "./agent[dev]" && pip install --no-deps -e .
+      - run: python -m pytest -q
+        working-directory: agent

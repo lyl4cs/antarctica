@@ -79,3 +79,9 @@ This file is your interview prep: "why did you choose X?" gets answered here.
 **Tradeoff:** `run_audit` blocks for up to ~90 s while the scan runs. Fine for an assistant conversation; a remote multi-user deployment would switch to streamable HTTP with auth and return the scan id immediately instead.
 **Known gap:** the API itself is unauthenticated, so anyone with the URL can trigger scans and paid fix calls. Acceptable for a portfolio project with a budget alert; the fix is an API key or IAP in front of Cloud Run.
 
+## 016: ADK agent consumes the MCP server; lives in its own environment
+**Decision:** The Gemini agent (Google ADK) gets its tools by launching our MCP server through ADK's `McpToolset`, and it is a separate package in `agent/`.
+**Why:** One tool layer for every AI client (Claude Desktop and the Gemini agent use the same four tools), so a fix to a tool fixes it everywhere. `google-adk` 2.12 pins `opentelemetry<=1.42.1` while the Pub/Sub client needs `>=1.44`; a separate environment avoids an unsolvable dependency conflict instead of downgrading production libraries.
+**Single agent, not multi-agent:** One LlmAgent with a ReAct loop and a self-check step in the instruction. ADR 011 still holds: add sub-agents only if traces show one agent failing at a step a specialist would fix.
+**Tracing:** ADK before/after callbacks record every model and tool call with latency (perf_counter, ms) and token counts, so cost and slowness are attributable to a step.
+
