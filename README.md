@@ -19,7 +19,7 @@ client ──POST /scans──▶ API (Cloud Run) ──publish──▶ Pub/Sub
 ## Run locally (no cloud needed)
 ```bash
 pip install -e ".[dev,ai]"
-python -m pytest -q                         # 22 offline tests (DB tests skip)
+python -m pytest -q                         # 26 offline tests (DB tests skip)
 uvicorn services.api.main:app --reload      # in-memory store + queue
 ```
 
@@ -29,6 +29,25 @@ docker compose up -d
 export TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/antarctica_test
 python -m pytest tests/integration -q
 ```
+
+## GitHub Action: perf check on every PR
+Scans your preview deploy, comments the score + top 3 fixes on the PR (one comment, updated on re-runs), and fails if the score drops more than `threshold` points below the baseline.
+```yaml
+# .github/workflows/perf.yml in the repo you want checked
+on: pull_request
+permissions: { pull-requests: write }
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: lyl4cs/antarctica/action@main
+        with:
+          api-url: https://<your-antarctica-api>
+          url: https://<preview-url-for-this-pr>
+          baseline-url: https://<your-production-site>   # optional, defaults to url
+          threshold: 5                                   # optional
+```
+Outputs: `score`, `baseline`, `passed`. Logic lives in `scripts/pr_check.py` (stdlib only, unit-tested).
 
 ## Deploy
 See [docs/SETUP.md](docs/SETUP.md). Design decisions and tradeoffs: [docs/DECISIONS.md](docs/DECISIONS.md).
