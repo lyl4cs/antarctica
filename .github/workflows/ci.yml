@@ -38,3 +38,21 @@ jobs:
           set -o pipefail
           python -m pytest tests/integration -q -rs | tee pytest.out
           ! grep -q skipped pytest.out
+
+  # React app in frontend/: typecheck, unit tests, production build.
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test -- --run
+      - run: npm run build

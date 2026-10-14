@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Antarctica — Scan in progress</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Instrument+Sans:wght@400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#FBF8F2}
+a{color:#174E78}a:hover{color:#12202B}
+.navlink{padding:10px 16px;border-radius:999px;text-decoration:none;color:#3C4A55;font-weight:500;font-size:15px}
+.navlink:hover{background:#F1ECE1;color:#12202B}
+.pill{transition:transform .15s ease, box-shadow .15s ease}
+.pill:hover{transform:translateY(-1px);box-shadow:0 0 0 6px rgba(255,255,255,.9),0 16px 36px rgba(18,32,43,.14),0 1px 2px rgba(18,32,43,.08)}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(5px) rotate(-1.2deg)}}
+.bob{animation:bob 3s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes ripple{0%,100%{opacity:.25}50%{opacity:.9}}
+.ripple{animation:ripple 2.4s ease-in-out infinite}
+.ripple2{animation:ripple 2.4s ease-in-out 1.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(47,127,185,.45)}100%{box-shadow:0 0 0 12px rgba(47,127,185,0)}}
+.pulse{animation:pulse 1.6s ease-out infinite}
+.tick{transition:height .25s ease, background-color .25s ease}
+@keyframes zz{0%,100%{opacity:.35;transform:translate(0,2px)}50%{opacity:1;transform:translate(3px,-4px)}}
+.zz{animation:zz 2.8s ease-in-out infinite;transform-box:fill-box}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #FBF8F2; color: #12202B; font-family: 'Instrument Sans', system-ui, sans-serif;">
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 24px 72px; box-sizing: border-box;">
+
+<header style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 22px 0;">
+<a href="Main.dc.html" aria-label="Antarctica home" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #12202B;">
+<svg width="38" height="38" viewBox="0 0 48 48" aria-hidden="true">
+<polygon points="11,42.5 37,42.5 33,46.5 15,46.5" fill="#6FB8E3" opacity="0.45"></polygon>
+<polygon points="9,40 15,30 33,30 39,40" fill="#DDF1FB"></polygon>
+<polygon points="33,30 39,40 29,40" fill="#9ED6F1"></polygon>
+<polygon points="9,40 15,30 33,30 39,40" fill="none" stroke="#174E78" stroke-width="1.4" stroke-linejoin="round"></polygon>
+<line x1="4" y1="41" x2="44" y2="41" stroke="#2F7FB9" stroke-width="1.6" stroke-linecap="round"></line>
+<g transform="translate(24,30.5) scale(0.27)">
+<ellipse cx="-62" cy="-6" rx="9" ry="6" fill="#F2A33A" stroke="#12202B" stroke-width="5"></ellipse>
+<path d="M -58 -2 C -66 -30 -40 -60 2 -60 C 44 -60 68 -40 66 -18 C 64 0 48 2 0 2 C -36 2 -54 4 -58 -2 Z" fill="#2B3A47" stroke="#12202B" stroke-width="6" stroke-linejoin="round"></path>
+<ellipse cx="34" cy="-28" rx="22" ry="17" fill="#FFFFFF"></ellipse>
+<path d="M 24 -33 Q 30 -27 36 -33" fill="none" stroke="#12202B" stroke-width="5" stroke-linecap="round"></path>
+<path d="M 38 -26 Q 43 -14 48 -26 Z" fill="#F2A33A" stroke="#12202B" stroke-width="3.5" stroke-linejoin="round"></path>
+</g>
+</svg>
+<span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 23px; letter-spacing: -0.03em;">antarctica</span>
+</a>
+<nav aria-label="Primary" style="display: flex; gap: 4px; align-items: center;">
+<a href="Main.dc.html" class="navlink">New scan</a>
+<a href="History.dc.html" class="navlink">History</a>
+</nav>
+</header>
+
+<main style="display: flex; justify-content: center; padding: 40px 0 0;">
+<section aria-live="polite" style="width: 100%; max-width: 760px; box-sizing: border-box; background: #FFFFFF; border: 1px solid #ECE6DA; border-radius: 36px; overflow: hidden; box-shadow: 0 20px 60px rgba(18,32,43,.06);">
+
+<div style="position: relative; background: #F3F8FA; border-bottom: 1px solid #E4EEF2;">
+<svg viewBox="0 0 760 230" width="100%" style="display: block;" role="img" aria-label="A penguin with its fish on an ice floe. It naps while the scan is queued, wakes up while it runs, and smiles when the report is ready.">
+<rect x="0" y="150" width="760" height="80" fill="#D3EAF7"></rect>
+<line x1="0" y1="150" x2="760" y2="150" stroke="#FFFFFF" stroke-width="3"></line>
+<line class="ripple" x1="200" y1="168" x2="250" y2="168" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"></line>
+<line class="ripple2" x1="505" y1="176" x2="560" y2="176" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"></line>
+<line class="ripple2" x1="120" y1="196" x2="150" y2="196" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"></line>
+<line class="ripple" x1="610" y1="204" x2="640" y2="204" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"></line>
+<g transform="translate(0,0)">
+<g class="bob">
+<polygon points="282,150 300,132 478,128 494,150 470,170 300,168" fill="#A9DCF3"></polygon>
+<polygon points="300,132 478,128 494,150 282,150" fill="#EAF7FD"></polygon>
+<polygon points="282,150 494,150 470,170 300,168" fill="#7FC0E6"></polygon>
+<g transform="translate(390,134) scale(0.95)">
+<ellipse cx="-63" cy="-15" rx="9" ry="5.5" fill="#F2A33A" stroke="#12202B" stroke-width="3" transform="rotate(-20 -63 -15)"></ellipse>
+<ellipse cx="-62" cy="-4" rx="9" ry="5.5" fill="#F2A33A" stroke="#12202B" stroke-width="3"></ellipse>
+<path d="M -58 -2 C -66 -30 -40 -60 2 -60 C 44 -60 68 -40 66 -18 C 64 0 48 2 0 2 C -36 2 -54 4 -58 -2 Z" fill="#2B3A47" stroke="#12202B" stroke-width="3.5" stroke-linejoin="round"></path>
+<path d="M -46 -2 C -48 -16 -28 -25 2 -25 C 34 -25 56 -18 57 -8 C 57 -1 44 -1 0 -1 C -24 -1 -42 0 -46 -2 Z" fill="#FFFFFF"></path>
+<ellipse cx="36" cy="-28" rx="20" ry="16" fill="#FFFFFF"></ellipse>
+<g opacity="{{eyesSleep}}">
+<path d="M 26 -33 Q 30 -29 34 -33" fill="none" stroke="#12202B" stroke-width="2.6" stroke-linecap="round"></path>
+<path d="M 40 -33 Q 44 -29 48 -33" fill="none" stroke="#12202B" stroke-width="2.6" stroke-linecap="round"></path>
+</g>
+<g opacity="{{eyesAwake}}">
+<circle cx="30" cy="-33" r="3.6" fill="#12202B"></circle>
+<circle cx="44" cy="-33" r="3.6" fill="#12202B"></circle>
+<circle cx="31.2" cy="-34.4" r="1.2" fill="#FFFFFF"></circle>
+<circle cx="45.2" cy="-34.4" r="1.2" fill="#FFFFFF"></circle>
+</g>
+<g opacity="{{eyesHappy}}">
+<path d="M 26 -31 Q 30 -37 34 -31" fill="none" stroke="#12202B" stroke-width="2.6" stroke-linecap="round"></path>
+<path d="M 40 -31 Q 44 -37 48 -31" fill="none" stroke="#12202B" stroke-width="2.6" stroke-linecap="round"></path>
+</g>
+<ellipse cx="24" cy="-24" rx="4" ry="2.5" fill="#F6A9A0" opacity="0.85"></ellipse>
+<ellipse cx="50" cy="-24" rx="4" ry="2.5" fill="#F6A9A0" opacity="0.85"></ellipse>
+<path d="M 33.5 -27 Q 37 -19 40.5 -27 Z" fill="#F2A33A" stroke="#12202B" stroke-width="2" stroke-linejoin="round"></path>
+<path d="M -32 -20 L -42 -29 L -40 -20 L -42 -11 Z" fill="#6FB8E3" stroke="#12202B" stroke-width="2.6" stroke-linejoin="round"></path>
+<path d="M -32 -20 C -24 -32 2 -32 10 -20 C 2 -8 -24 -8 -32 -20 Z" fill="#6FB8E3" stroke="#12202B" stroke-width="2.6"></path>
+<circle cx="2" cy="-22" r="1.8" fill="#12202B"></circle>
+<path d="M -12 -27 Q -8 -20 -12 -13" fill="none" stroke="#12202B" stroke-width="1.8" stroke-linecap="round" opacity="0.45"></path>
+<path d="M -10 -47 C 2 -41 6 -25 -2 -13 C -6 -8 -13 -10 -12 -17 C -10 -27 -16 -39 -10 -47 Z" fill="#2B3A47" stroke="#12202B" stroke-width="3" stroke-linejoin="round"></path>
+<g opacity="{{eyesSleep}}">
+<g class="zz">
+<path d="M 60 -68 h 9 l -9 10 h 9" fill="none" stroke="#2F7FB9" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M 75 -86 h 6 l -6 7 h 6" fill="none" stroke="#2F7FB9" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+<div style="position: absolute; top: 20px; left: 24px; right: 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+<span style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: rgba(255,255,255,.92); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 500; color: #12202B;">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B6670" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"></path></svg>
+northwind.shop
+</span>
+<span style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; font-size: 14px; font-weight: 600; background: {{chipBg}}; color: {{chipFg}};">
+<span style="width: 8px; height: 8px; border-radius: 999px; background: {{chipFg}};"></span>{{chipLabel}}
+</span>
+</div>
+</div>
+
+<div style="padding: 36px 40px 40px; display: flex; flex-direction: column; gap: 32px;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: clamp(30px, 4vw, 44px); line-height: 1.05; letter-spacing: -0.03em;">{{title}}</h1>
+<p style="margin: 0; font-size: 17px; line-height: 1.55; color: #3C4A55; max-width: 52ch;">{{sub}}</p>
+</div>
+
+<ol aria-label="Scan progress" style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+<li style="display: flex; flex-direction: column; gap: 10px;">
+<div style="display: flex; align-items: center; gap: 8px;">
+<sc-if value="{{s.done}}" hint-placeholder-val="{{ true }}">
+<span style="display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 999px; background: #12202B; color: #FFFFFF; flex: none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L19 7"></path></svg></span>
+</sc-if>
+<sc-if value="{{s.current}}" hint-placeholder-val="{{ false }}">
+<span class="pulse" style="width: 26px; height: 26px; box-sizing: border-box; border-radius: 999px; border: 7px solid #2F7FB9; background: #FFFFFF; flex: none;"></span>
+</sc-if>
+<sc-if value="{{s.todo}}" hint-placeholder-val="{{ false }}">
+<span style="width: 26px; height: 26px; box-sizing: border-box; border-radius: 999px; border: 2px solid #D6CFC0; background: #FFFFFF; flex: none;"></span>
+</sc-if>
+<span style="flex: 1; height: 2px; border-radius: 2px; background: {{s.lineColor}};"></span>
+</div>
+<span style="font-size: 15px; font-weight: 600; color: {{s.labelColor}};">{{s.label}}</span>
+</li>
+</sc-for>
+</ol>
+
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5B6670;">Elapsed</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 600; color: #12202B;">{{elapsedLabel}}</span>
+</div>
+<div aria-hidden="true" style="position: relative; height: 56px; display: flex; align-items: flex-end; justify-content: space-between; gap: 2px;">
+<span style="position: absolute; left: 50%; right: 0; bottom: 0; height: 56px; border-radius: 10px; background: #F1F7FB;"></span>
+<sc-for list="{{ticks}}" as="t" hint-placeholder-count="31">
+<span class="tick" style="position: relative; width: 2px; border-radius: 2px; height: {{t.h}}px; background: {{t.c}};"></span>
+</sc-for>
+</div>
+<div style="display: flex; justify-content: space-between; gap: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5B6670;">
+<span>0 s</span><span>usually done between 30 and 60 s</span><span>60 s</span>
+</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 14px; color: #5B6670; padding-top: 4px; border-top: 1px solid #F0EBE1;">
+<span style="padding-top: 16px;">Attempt <strong style="color: #12202B; font-weight: 600;">1</strong></span>
+<span style="padding-top: 16px;">Created <strong style="color: #12202B; font-weight: 600;">3:24:08 PM</strong></span>
+<sc-if value="{{isReady}}" hint-placeholder-val="{{ false }}">
+<span style="padding-top: 16px;">Finished <strong style="color: #12202B; font-weight: 600;">3:24:51 PM</strong></span>
+</sc-if>
+</div>
+
+<sc-if value="{{isReady}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; justify-content: center; padding: 8px 0 4px;">
+<a href="Report.dc.html" class="pill" style="display: inline-flex; align-items: center; gap: 22px; padding: 10px 10px 10px 34px; min-height: 76px; box-sizing: border-box; border-radius: 999px; background: #FFFFFF; color: #12202B; text-decoration: none; font-weight: 600; font-size: 21px; border: 1px solid #EFEAE0; box-shadow: 0 0 0 7px rgba(243,240,233,.9), 0 12px 34px rgba(18,32,43,.12), 0 1px 2px rgba(18,32,43,.08);">
+<span>Your Report Is Ready</span>
+<span style="display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 999px; background: #2E9A52; color: #FFFFFF;">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M6 13l6 6l6-6"></path></svg>
+</span>
+</a>
+</div>
+</sc-if>
+</div>
+</section>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["auto","queued","running","ready"],"default":"auto"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tick: 0 };
+  }
+  componentDidMount() {
+    this.iv = setInterval(() => {
+      const t = ((this.state && this.state.tick) || 0) + 1;
+      if (t >= 48) clearInterval(this.iv);
+      this.setState({ tick: t });
+    }, 250);
+  }
+  componentWillUnmount() {
+    clearInterval(this.iv);
+  }
+  renderVals() {
+    const mode = this.props.state ?? 'auto';
+    const tick = (this.state && this.state.tick) || 0;
+    let phase = mode;
+    let elapsed = 0;
+    if (mode === 'auto') {
+      if (tick < 6) { phase = 'queued'; elapsed = 0; }
+      else if (tick < 47) { phase = 'running'; elapsed = tick - 6; }
+      else { phase = 'ready'; elapsed = 41; }
+    } else if (mode === 'running') {
+      elapsed = 24;
+    } else if (mode === 'ready') {
+      elapsed = 41;
+    }
+
+    const copy = {
+      queued: { title: 'Waiting for a scanner', sub: 'Your scan is in line and will start in a moment.', chip: 'Queued', bg: '#F1ECE1', fg: '#5B4A2E' },
+      running: { title: 'Measuring northwind.shop', sub: 'Loading the page and timing every paint, script and layout shift. This usually takes 30–60 seconds.', chip: 'Running', bg: '#E1EFF9', fg: '#174E78' },
+      ready: { title: 'Done. Here’s what we found.', sub: 'Finished in 41 seconds: a score, five core metrics and five findings, each with an AI fix on request.', chip: 'Done', bg: '#DFF2E6', fg: '#1E6B3A' }
+    }[phase];
+
+    const order = ['queued', 'running', 'ready'];
+    const idx = order.indexOf(phase);
+    const labels = ['Queued', 'Running', 'Report ready'];
+    const steps = labels.map((label, i) => {
+      const done = i < idx || (phase === 'ready' && i === 2);
+      const current = i === idx && phase !== 'ready';
+      return {
+        label,
+        done,
+        current,
+        todo: !done && !current,
+        lineColor: i < idx ? '#12202B' : '#E6DFD1',
+        labelColor: (done || current) ? '#12202B' : '#8A939A'
+      };
+    });
+
+    const ticks = [];
+    for (let v = 0; v <= 60; v += 2) {
+      const passed = v <= elapsed && phase !== 'queued';
+      const near = phase === 'running' ? Math.exp(-Math.pow(v - elapsed, 2) / (2 * 16)) : 0;
+      const h = Math.round(12 + (passed ? 10 : 0) + 30 * near);
+      ticks.push({ h, c: passed ? (near > 0.6 ? '#12202B' : '#2F7FB9') : '#D6CFC0' });
+    }
+
+    const mm = Math.floor(elapsed / 60);
+    const ss = String(elapsed % 60).padStart(2, '0');
+
+    return {
+      title: copy.title,
+      sub: copy.sub,
+      chipLabel: copy.chip,
+      chipBg: copy.bg,
+      chipFg: copy.fg,
+      steps,
+      ticks,
+      elapsedLabel: mm + ':' + ss,
+      isReady: phase === 'ready',
+      eyesSleep: phase === 'queued' ? 1 : 0,
+      eyesAwake: phase === 'running' ? 1 : 0,
+      eyesHappy: phase === 'ready' ? 1 : 0
+    };
+  }
+}
+</script>
+</body>
+</html>

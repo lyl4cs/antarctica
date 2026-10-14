@@ -2,6 +2,11 @@
 
 Flow: POST /scans -> row in DB (status=queued) -> job published to Pub/Sub ->
 returns 202 immediately. The scanner service does the slow work asynchronously.
+
+CORS: the React frontend (frontend/, hosted on Vercel) lives on a different origin
+than this API, so browsers block its requests unless we answer with
+Access-Control-Allow-Origin. CORSMiddleware does that for the origins listed in
+CORS_ORIGINS only, never "*". See docs/DECISIONS.md, ADR 014.
 """
 
 from __future__ import annotations
@@ -10,6 +15,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, HttpUrl
 
@@ -22,6 +28,12 @@ from services.common.queue import InMemoryPublisher, Publisher, PubSubPublisher
 from services.common.store import InMemoryStore, PostgresStore, Store
 
 app = FastAPI(title="Antarctica")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=list(get_settings().cors_origins),
+    allow_methods=["GET", "POST"],
+    allow_headers=["content-type"],
+)
 
 
 @lru_cache
@@ -48,8 +60,9 @@ def index() -> str:
     return INDEX_HTML
 
 
-@app.get("/healthz")
-def healthz() -> dict:
+# Not /healthz: Cloud Run's Google Front End reserves that path and never forwards it.
+@app.get("/health")
+def health() -> dict:
     return {"ok": True}
 
 
@@ -62,6 +75,15 @@ def create_scan(
     scan = store.create_scan(str(req.url))
     publisher.publish({"scan_id": scan.id, "url": scan.url})
     return scan
+
+
+@app.get("/scans")
+def recent_scans(limit: int = 20, store: Store = Depends(get_store)) -> list[ScanSummary]:
+    """Newest scans across every URL (the home page's "Recent scans").
+
+    No route clash with GET /scans/{scan_id}: that path needs a second segment,
+    so "/scans" and "/scans/<id>" can never match the same request."""
+    return store.list_recent(limit=max(1, min(limit, 100)))
 
 
 @app.get("/sites/scans")

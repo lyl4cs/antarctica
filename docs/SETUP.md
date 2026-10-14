@@ -47,6 +47,17 @@ curl $API/scans/<id>/report
 curl "$API/scans/<id>/fixes?limit=3"
 ```
 
+## 5b. Frontend on Vercel (10 min)
+- Apply new migrations first: `DATABASE_URL='...' python infra/migrate.py` (safe to re-run; it only applies files it hasn't seen).
+- vercel.com → Add New → Project → `lyl4cs/antarctica`, **Root Directory `frontend`**, env var `VITE_API_URL` = the API URL from step 5. Deploy.
+- Allow that origin to call the API (CORS), then check it:
+  ```
+  PROJECT_ID=antarctica-ls FRONTEND_ORIGIN=https://<your-app>.vercel.app ./infra/deploy.sh
+  curl -si $API/health -H 'Origin: https://<your-app>.vercel.app' | grep -i access-control-allow-origin
+  ```
+  Pass `FRONTEND_ORIGIN` on every future deploy too. Details: `frontend/README.md`.
+- Health checks use `/health`, not `/healthz`: Cloud Run's front end reserves `/healthz` and answers it itself with a 404.
+
 ## 6. Connect Codex (cloud agent) (10 min)
 - chatgpt.com/codex → connect GitHub → select `lyl4cs/antarctica`.
 - Create an environment: setup script `pip install -e ".[dev,ai]"`. **Add no secrets.** Agents don't need GCP or the database; tests run fully offline.
