@@ -19,7 +19,7 @@ client ──POST /scans──▶ API (Cloud Run) ──publish──▶ Pub/Sub
 ## Run locally (no cloud needed)
 ```bash
 pip install -e ".[dev,ai]"
-python -m pytest -q                         # 18 offline tests
+python -m pytest -q                         # 22 offline tests
 uvicorn services.api.main:app --reload      # in-memory store + queue
 ```
 

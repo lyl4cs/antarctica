@@ -18,7 +18,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Protocol
 
-from services.common.models import Report, Scan, StoredFinding
+from services.common.models import Report, Scan, ScanSummary, StoredFinding
 from services.scanner.parse import ParsedReport
 
 
@@ -35,6 +35,7 @@ class Store(Protocol):
     ) -> bool: ...
     def mark_failed(self, scan_id: str, error: str) -> None: ...
     def get_report(self, scan_id: str) -> Report | None: ...
+    def list_scans(self, url: str, limit: int = 20) -> list[ScanSummary]: ...
 
 
 class InMemoryStore:
@@ -82,6 +83,22 @@ class InMemoryStore:
             metrics=rep.metrics.model_dump(exclude={"performance_score"}),
             findings=findings,
         )
+
+
+    def list_scans(self, url: str, limit: int = 20) -> list[ScanSummary]:
+        scans = sorted(
+            (sc for sc in self.scans.values() if sc.url == url),
+            key=lambda sc: sc.created_at, reverse=True,
+        )[:limit]
+        return [
+            ScanSummary(
+                scan=sc,
+                performance_score=(
+                    self.reports[sc.id].metrics.performance_score if sc.id in self.reports else None
+                ),
+            )
+            for sc in scans
+        ]
 
 
 class PostgresStore:  # pragma: no cover - exercised against a real DB
@@ -189,3 +206,14 @@ class PostgresStore:  # pragma: no cover - exercised against a real DB
             metrics=dict(zip(["fcp_ms", "lcp_ms", "tbt_ms", "cls", "speed_index_ms"], a[1:])),
             findings=[StoredFinding(**dict(zip(keys, r))) for r in rows],
         )
+
+    def list_scans(self, url: str, limit: int = 20) -> list[ScanSummary]:
+        cols = ", ".join(f"s.{c.strip()}" for c in self._SCAN_COLS.split(","))
+        with self._conn() as c:
+            rows = c.execute(
+                f"""SELECT {cols}, a.performance_score FROM scans s
+                    LEFT JOIN audits a ON a.scan_id = s.id
+                    WHERE s.url = %s ORDER BY s.created_at DESC LIMIT %s""",
+                (url, limit),
+            ).fetchall()
+        return [ScanSummary(scan=self._row_to_scan(r[:-1]), performance_score=r[-1]) for r in rows]

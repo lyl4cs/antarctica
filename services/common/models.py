@@ -34,3 +34,10 @@ class Report(BaseModel):
     performance_score: int | None
     metrics: dict[str, float | None]
     findings: list[StoredFinding]
+
+
+class ScanSummary(BaseModel):
+    """One row of a site's scan history: used for before/after comparisons."""
+
+    scan: Scan
+    performance_score: int | None

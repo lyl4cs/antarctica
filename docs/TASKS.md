@@ -8,7 +8,9 @@
 - Fix suggester (Gemini, JSON output, token, latency, and cost tracking)
 - Eval harness: with vs. without RAG, LLM judge, p95, tokens/sec, $/request
 - Infra: setup + deploy scripts (Cloud Run, Pub/Sub push, DLQ, Secret Manager), Cloud Build
-- 18 offline tests + CI
+- Scan history endpoint (`GET /sites/scans`), before/after `scripts/measure.py` (median of N runs)
+- Eval draft builder `scripts/build_cases.py`, minimal web UI at `/`
+- 22 offline tests + CI
 
 ## Owner tasks (only you can do these)
 1. GitHub repo, Neon, GCP project + **$20 budget alert**, `setup_gcp.sh`, `deploy.sh` (docs/SETUP.md)
@@ -23,16 +25,16 @@
 ### A1: Postgres integration tests
 > Read AGENTS.md first. Add `docker-compose.yml` with `pgvector/pgvector:pg16`, and integration tests for `PostgresStore` and `PgVectorStore` that run only when `TEST_DATABASE_URL` is set (skip otherwise). Apply migrations with `infra/migrate.py` in a fixture. Add a separate CI job using a Postgres service container. Done when the integration tests pass in CI.
 
-### A2: Scan history + re-scan endpoint
+### A2: Scan history + re-scan endpoint ✅ DONE
 > Read AGENTS.md first. Add `GET /sites/scans?url=...` returning past scans for a URL (newest first) and their performance scores, so before/after comparisons are one call. Add a migration if needed. Tests with InMemoryStore. Done when tests pass.
 
-### A3: Before/after measurement script
+### A3: Before/after measurement script ✅ DONE
 > Read AGENTS.md first. Add `scripts/measure.py URL --runs 3 --api $API`. It submits N scans, waits for completion, and prints the median performance score, LCP, TBT, and CLS. Explain in the docstring why we use the median of several runs (Lighthouse variance). Mock HTTP in tests.
 
-### A4: Eval case builder
+### A4: Eval case builder ✅ DONE
 > Read AGENTS.md first. Add `scripts/build_cases.py`. It takes scan IDs, pulls their findings via the API, and writes a draft `cases.jsonl` with `reference_fix` left empty for the owner to fill in. Deduplicate by audit_id per URL. Tests with a fake API.
 
-### A5: Minimal web UI
+### A5: Minimal web UI ✅ DONE
 > Read AGENTS.md first. Add a single static page served by the API at `/`: URL input → submit → polls status → shows score, top findings, and fix suggestions. Plain HTML + vanilla JS, no framework. Keep it under 300 lines.
 
 ### A6: GitHub Action (stretch)

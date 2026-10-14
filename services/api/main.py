@@ -7,15 +7,17 @@ returns 202 immediately. The scanner service does the slow work asynchronously.
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, HttpUrl
 
 from core.fixes.suggest import FindingInput, suggest_fix
 from core.llm import LLM
 from core.rag.retrieve import Retriever
 from services.common.config import get_settings
-from services.common.models import Report, Scan
+from services.common.models import Report, Scan, ScanSummary
 from services.common.queue import InMemoryPublisher, Publisher, PubSubPublisher
 from services.common.store import InMemoryStore, PostgresStore, Store
 
@@ -38,6 +40,14 @@ class ScanRequest(BaseModel):
     url: HttpUrl
 
 
+INDEX_HTML = (Path(__file__).parent / "static" / "index.html").read_text()
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def index() -> str:
+    return INDEX_HTML
+
+
 @app.get("/healthz")
 def healthz() -> dict:
     return {"ok": True}
@@ -52,6 +62,13 @@ def create_scan(
     scan = store.create_scan(str(req.url))
     publisher.publish({"scan_id": scan.id, "url": scan.url})
     return scan
+
+
+@app.get("/sites/scans")
+def site_history(url: HttpUrl, limit: int = 20, store: Store = Depends(get_store)) -> list[ScanSummary]:
+    """Past scans for one URL, newest first. Normalizes the URL the same way POST /scans does,
+    so 'https://a.com' and 'https://a.com/' match."""
+    return store.list_scans(str(url), limit=max(1, min(limit, 100)))
 
 
 @app.get("/scans/{scan_id}")

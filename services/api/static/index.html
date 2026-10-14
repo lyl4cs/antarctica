@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Antarctica</title>
+<style>
+  :root { --bg:#f7f8fa; --fg:#14171c; --muted:#5b6472; --card:#fff; --line:#e3e6eb;
+          --good:#0a7d38; --ok:#a46200; --bad:#c22b1e; --accent:#2457d6; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0f1115; --fg:#e8eaed; --muted:#9aa3ae; --card:#171a20; --line:#2a2f37;
+            --good:#3ecf7a; --ok:#f0a92f; --bad:#ff6b5e; --accent:#6c95ff; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif; background:var(--bg); color:var(--fg); }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  p.sub { color: var(--muted); margin: 0 0 24px; }
+  form { display:flex; gap:8px; }
+  input { flex:1; min-width:0; padding:12px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--fg); font-size:16px; }
+  button { padding:12px 18px; border:0; border-radius:8px; background:var(--accent); color:#fff; font-weight:600; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:default; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-top:16px; }
+  .score { font-size:48px; font-weight:700; }
+  .metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; margin-top:8px; }
+  .metric small { color:var(--muted); display:block; }
+  .finding h3 { margin:0 0 4px; font-size:16px; }
+  .finding .save { color:var(--muted); font-size:14px; }
+  pre { background:var(--bg); border:1px solid var(--line); padding:10px; border-radius:6px; overflow-x:auto; font-size:13px; }
+  .status { color:var(--muted); margin-top:12px; }
+  .src { font-size:12px; color:var(--muted); word-break:break-all; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Antarctica</h1>
+  <p class="sub">Website speed audit with AI fix suggestions.</p>
+  <form id="f">
+    <input id="url" type="url" placeholder="https://example.com" required>
+    <button id="go">Scan</button>
+  </form>
+  <div id="status" class="status"></div>
+  <div id="out"></div>
+</main>
+<script>
+// All server/LLM text is inserted with textContent (never innerHTML) to avoid XSS.
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag);
+  if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const fmt = (k, v) => v == null ? "-" : k === "cls" ? v.toFixed(3) : `${Math.round(v)} ms`;
+const color = (s) => s >= 90 ? "var(--good)" : s >= 50 ? "var(--ok)" : "var(--bad)";
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.status);
+  return r.json();
+}
+
+async function poll(id) {
+  for (let i = 0; i < 90; i++) {
+    const s = await api(`/scans/${id}`);
+    $("status").textContent = `Status: ${s.status}${s.attempts ? ` (attempt ${s.attempts})` : ""}`;
+    if (s.status === "done" || s.status === "failed") return s;
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+  throw new Error("timed out");
+}
+
+function renderReport(rep) {
+  const c = el("div", "card");
+  const sc = el("div", "score", rep.performance_score ?? "-");
+  sc.style.color = color(rep.performance_score ?? 0);
+  c.append(el("div", null, "Performance score"), sc);
+  const m = el("div", "metrics");
+  for (const [k, label] of [["fcp_ms","FCP"],["lcp_ms","LCP"],["tbt_ms","TBT"],["cls","CLS"],["speed_index_ms","Speed Index"]]) {
+    const d = el("div", "metric"); d.append(el("small", null, label), el("b", null, fmt(k, rep.metrics[k]))); m.append(d);
+  }
+  c.append(m);
+  return c;
+}
+
+function renderFix(fx) {
+  const c = el("div", "card finding");
+  c.append(el("h3", null, fx.title), el("p", null, fx.diagnosis), el("p", null, "Fix: " + fx.fix));
+  if (fx.code) c.append(el("pre", null, fx.code));
+  if (fx.sources.length) c.append(el("div", "src", "Sources: " + fx.sources.join(" · ")));
+  return c;
+}
+
+$("f").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("go").disabled = true; $("out").replaceChildren();
+  try {
+    const scan = await api("/scans", { method: "POST", headers: { "content-type": "application/json" },
+                                       body: JSON.stringify({ url: $("url").value }) });
+    const final = await poll(scan.id);
+    if (final.status === "failed") throw new Error(final.error || "scan failed");
+    const rep = await api(`/scans/${scan.id}/report`);
+    $("out").append(renderReport(rep));
+    for (const f of rep.findings.slice(0, 5)) {
+      const c = el("div", "card finding");
+      c.append(el("h3", null, f.title), el("div", "save", f.savings_ms ? `~${Math.round(f.savings_ms)} ms potential savings` : ""));
+      $("out").append(c);
+    }
+    $("status").textContent = "Generating AI fixes…";
+    try {
+      const fixes = await api(`/scans/${scan.id}/fixes?limit=3`);
+      $("out").append(el("h2", null, "Suggested fixes"), ...fixes.map(renderFix));
+      $("status").textContent = "Done";
+    } catch (err) { $("status").textContent = `Report ready. AI fixes unavailable: ${err.message}`; }
+  } catch (err) {
+    $("status").textContent = `Error: ${err.message}`;
+  } finally { $("go").disabled = false; }
+});
+</script>
+</body>
+</html>

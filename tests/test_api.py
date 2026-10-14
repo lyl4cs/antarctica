@@ -64,3 +64,21 @@ def test_fixes_with_ai(ctx, scan_result):
     fixes = client.get(f"/scans/{scan_id}/fixes?limit=1").json()
     assert fixes[0]["fix"] == "split bundles"
     assert fixes[0]["sources"] == ["web.dev/js"]
+
+
+def test_site_history_newest_first_with_scores(ctx, scan_result):
+    client, store, _ = ctx
+    first = client.post("/scans", json={"url": "https://example.com"}).json()["id"]
+    store.save_result(first, scan_result.report, scan_result.raw, scan_result.duration_ms)
+    second = client.post("/scans", json={"url": "https://example.com/"}).json()["id"]
+    client.post("/scans", json={"url": "https://other.com"})
+    hist = client.get("/sites/scans", params={"url": "https://example.com"}).json()
+    assert [h["scan"]["id"] for h in hist] == [second, first]
+    assert hist[0]["performance_score"] is None and hist[1]["performance_score"] == 47
+
+
+def test_index_page_served(ctx):
+    client, _, _ = ctx
+    res = client.get("/")
+    assert res.status_code == 200 and "Antarctica" in res.text
+    assert "innerHTML" not in res.text.split("<script>")[1].replace("never innerHTML", "")
