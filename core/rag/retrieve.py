@@ -58,6 +58,17 @@ class PgVectorStore:  # pragma: no cover - needs Postgres + pgvector
         self._conn = psycopg.connect(database_url, autocommit=True)
         register_vector(self._conn)
 
+    # One long-lived connection (the API keeps it for its lifetime). Short-lived users
+    # like scripts and tests should close it: `with PgVectorStore(url) as store: ...`
+    def close(self) -> None:
+        self._conn.close()
+
+    def __enter__(self) -> PgVectorStore:
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self.close()
+
     def add(self, chunks, vectors) -> None:
         import numpy as np
 

@@ -103,10 +103,11 @@ def test_pgvector_retrieval_ranks_relevant_chunk_first(clean_db):
         "# Defer non-critical CSS\nRender blocking stylesheets delay first paint.\n\n"
         "# Lazy load images\nUse loading lazy on offscreen images below the fold.\n"
     )
-    retriever = Retriever(HashEmbedder(), PgVectorStore(clean_db))
-    assert retriever.ingest(chunk_markdown(doc, "web.dev/test")) == 2
+    with PgVectorStore(clean_db) as vectors:
+        retriever = Retriever(HashEmbedder(), vectors)
+        assert retriever.ingest(chunk_markdown(doc, "web.dev/test")) == 2
+        top = retriever.retrieve("offscreen images lazy", k=2)
 
-    top = retriever.retrieve("offscreen images lazy", k=2)
     assert "Lazy load images" in top[0].text
     assert top[0].source == "web.dev/test"
     assert top[0].score > top[1].score  # cosine similarity, higher = closer
