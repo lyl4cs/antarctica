@@ -77,15 +77,6 @@ def create_scan(
     return scan
 
 
-@app.get("/scans")
-def recent_scans(limit: int = 20, store: Store = Depends(get_store)) -> list[ScanSummary]:
-    """Newest scans across every URL (the home page's "Recent scans").
-
-    No route clash with GET /scans/{scan_id}: that path needs a second segment,
-    so "/scans" and "/scans/<id>" can never match the same request."""
-    return store.list_recent(limit=max(1, min(limit, 100)))
-
-
 @app.get("/sites/scans")
 def site_history(url: HttpUrl, limit: int = 20, store: Store = Depends(get_store)) -> list[ScanSummary]:
     """Past scans for one URL, newest first. Normalizes the URL the same way POST /scans does,
