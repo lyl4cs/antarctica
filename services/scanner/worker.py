@@ -45,8 +45,9 @@ def decode_push(body: dict) -> dict:
     return json.loads(base64.b64decode(body["message"]["data"]))
 
 
-@app.get("/healthz")
-def healthz() -> dict:
+# Not /healthz: Cloud Run's Google Front End reserves that path and never forwards it.
+@app.get("/health")
+def health() -> dict:
     return {"ok": True}
 
 

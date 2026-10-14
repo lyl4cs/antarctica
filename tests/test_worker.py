@@ -66,3 +66,10 @@ def test_malformed_message_is_dropped(ctx):
     client, _ = ctx
     res = client.post("/pubsub/push", json={"message": {"data": "bm90IGpzb24="}})
     assert res.status_code == 200 and res.json()["status"] == "dropped"
+
+
+def test_health_endpoint_not_healthz():
+    # Cloud Run's front end swallows /healthz, so the probe path must be /health.
+    client = TestClient(worker.app)
+    assert client.get("/health").json() == {"ok": True}
+    assert client.get("/healthz").status_code == 404

@@ -107,13 +107,13 @@ def test_cors_allows_configured_frontend_origin(ctx):
     })
     assert pre.status_code == 200
     assert pre.headers["access-control-allow-origin"] == origin
-    res = client.get("/healthz", headers={"Origin": origin})
+    res = client.get("/health", headers={"Origin": origin})
     assert res.headers["access-control-allow-origin"] == origin
 
 
 def test_cors_rejects_unknown_origin(ctx):
     client, _, _ = ctx
-    res = client.get("/healthz", headers={"Origin": "https://evil.example"})
+    res = client.get("/health", headers={"Origin": "https://evil.example"})
     assert res.status_code == 200  # CORS is enforced by the browser, not the server...
     assert "access-control-allow-origin" not in res.headers  # ...which needs this header
 
@@ -134,3 +134,10 @@ def test_index_page_served(ctx):
     res = client.get("/")
     assert res.status_code == 200 and "Antarctica" in res.text
     assert "innerHTML" not in res.text.split("<script>")[1].replace("never innerHTML", "")
+
+
+def test_health_endpoint_not_healthz(ctx):
+    # Cloud Run's front end swallows /healthz, so the probe path must be /health.
+    client, _, _ = ctx
+    assert client.get("/health").json() == {"ok": True}
+    assert client.get("/healthz").status_code == 404
