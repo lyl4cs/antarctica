@@ -10,3 +10,31 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: ruff check .
       - run: python -m pytest -q
+
+  # Runs the real SQL against Postgres + pgvector (same image as docker-compose.yml).
+  # Separate job so a broken DB never hides a unit-test failure, and vice versa.
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres   # throwaway container password, not a secret
+          POSTGRES_DB: antarctica_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s --health-timeout 3s --health-retries 15
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/antarctica_test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12" }
+      - run: pip install -e ".[dev,ai]"
+      # Fail if anything was skipped: a skipped DB test would make this job a silent no-op.
+      - run: |
+          set -o pipefail
+          python -m pytest tests/integration -q -rs | tee pytest.out
+          ! grep -q skipped pytest.out

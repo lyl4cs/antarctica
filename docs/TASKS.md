@@ -11,6 +11,7 @@
 - Scan history endpoint (`GET /sites/scans`), before/after `scripts/measure.py` (median of N runs)
 - Eval draft builder `scripts/build_cases.py`, minimal web UI at `/`
 - 22 offline tests + CI
+- 9 Postgres/pgvector integration tests (incl. concurrent-delivery lock test), own CI job
 
 ## Owner tasks (only you can do these)
 1. GitHub repo, Neon, GCP project + **$20 budget alert**, `setup_gcp.sh`, `deploy.sh` (docs/SETUP.md)
@@ -22,7 +23,7 @@
 
 ## Agent tasks: paste into Codex / Claude Code one at a time
 
-### A1: Postgres integration tests
+### A1: Postgres integration tests ✅ DONE
 > Read AGENTS.md first. Add `docker-compose.yml` with `pgvector/pgvector:pg16`, and integration tests for `PostgresStore` and `PgVectorStore` that run only when `TEST_DATABASE_URL` is set (skip otherwise). Apply migrations with `infra/migrate.py` in a fixture. Add a separate CI job using a Postgres service container. Done when the integration tests pass in CI.
 
 ### A2: Scan history + re-scan endpoint ✅ DONE
