@@ -48,6 +48,6 @@
 ### A8: MCP server ✅ DONE
 > `mcp_server/server.py`: run_audit, get_report, suggest_fixes, site_history over stdio; in-process client tests. Setup: docs/MCP.md.
 
-### A9: ADK agent (next)
-> Google ADK agent (Gemini) that uses the same four tools in a ReAct loop: audit -> pick worst finding -> get fix -> summarize a prioritized plan. Trace each step (tool, latency, tokens).
+### A9: ADK agent ✅ DONE
+> `agent/`: Google ADK agent (Gemini) using the MCP server as its toolset in a ReAct loop (audit -> pick findings -> get fixes -> self-check -> plan), with per-step tracing (latency, tokens). Run: see agent/README.md.
 

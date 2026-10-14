@@ -62,6 +62,9 @@ Outputs: `score`, `baseline`, `passed`. Logic lives in `scripts/pr_check.py` (st
 ## MCP server: use it from Claude / Cursor
 `antarctica-mcp` exposes `run_audit`, `get_report`, `suggest_fixes`, `site_history` as MCP tools over stdio. Setup for Claude Desktop and Claude Code: [docs/MCP.md](docs/MCP.md).
 
+## ADK agent: Gemini makes the plan
+`agent/` is a Google ADK agent that uses the MCP tools in a ReAct loop and returns a prioritized fix plan with a per-step trace. Setup: [agent/README.md](agent/README.md).
+
 ## Deploy
 See [docs/SETUP.md](docs/SETUP.md). Design decisions and tradeoffs: [docs/DECISIONS.md](docs/DECISIONS.md).
 
