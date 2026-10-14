@@ -16,7 +16,7 @@ keep the prompt cheap. Check it with the eval: try k=3 and k=8 and compare.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, Self
 
 from core.llm import Embedder
 from core.rag.chunk import DocChunk
@@ -57,6 +57,17 @@ class PgVectorStore:  # pragma: no cover - needs Postgres + pgvector
 
         self._conn = psycopg.connect(database_url, autocommit=True)
         register_vector(self._conn)
+
+    # One long-lived connection (the API keeps it for its lifetime). Short-lived users
+    # like scripts and tests should close it: `with PgVectorStore(url) as store: ...`
+    def close(self) -> None:
+        self._conn.close()
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self.close()
 
     def add(self, chunks, vectors) -> None:
         import numpy as np

@@ -19,8 +19,15 @@ client ──POST /scans──▶ API (Cloud Run) ──publish──▶ Pub/Sub
 ## Run locally (no cloud needed)
 ```bash
 pip install -e ".[dev,ai]"
-python -m pytest -q                         # 22 offline tests
+python -m pytest -q                         # 22 offline tests (DB tests skip)
 uvicorn services.api.main:app --reload      # in-memory store + queue
+```
+
+Integration tests against real Postgres + pgvector (CI runs these in a separate job):
+```bash
+docker compose up -d
+export TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/antarctica_test
+python -m pytest tests/integration -q
 ```
 
 ## Deploy
