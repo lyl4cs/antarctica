@@ -32,3 +32,6 @@ class ApiClient:
 
     def history(self, url: str) -> list[dict]:
         return self._req("GET", "/sites/scans?" + urllib.parse.urlencode({"url": url}))
+
+    def fixes(self, scan_id: str, limit: int = 3) -> list[dict]:
+        return self._req("GET", f"/scans/{scan_id}/fixes?limit={limit}")

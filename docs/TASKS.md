@@ -10,7 +10,7 @@
 - Infra: setup + deploy scripts (Cloud Run, Pub/Sub push, DLQ, Secret Manager), Cloud Build
 - Scan history endpoint (`GET /sites/scans`), before/after `scripts/measure.py` (median of N runs)
 - Eval draft builder `scripts/build_cases.py`, minimal web UI at `/`
-- 22 offline tests + CI
+- 26 offline tests + CI
 - 9 Postgres/pgvector integration tests (incl. concurrent-delivery lock test), own CI job
 
 ## Owner tasks (only you can do these)
@@ -38,5 +38,5 @@
 ### A5: Minimal web UI ✅ DONE
 > Read AGENTS.md first. Add a single static page served by the API at `/`: URL input → submit → polls status → shows score, top findings, and fix suggestions. Plain HTML + vanilla JS, no framework. Keep it under 300 lines.
 
-### A6: GitHub Action (stretch)
+### A6: GitHub Action (stretch) ✅ DONE
 > Read AGENTS.md first. Create `action/action.yml` (a composite action) that scans a preview URL on each PR, comments the score and top 3 fixes, and fails if the score drops more than a threshold versus the last scan. Document usage in README.

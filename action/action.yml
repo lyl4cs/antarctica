@@ -1,0 +1,52 @@
+name: Antarctica performance check
+description: >
+  Scans a preview URL with Antarctica on each PR, comments the Lighthouse score and
+  top 3 fixes, and fails if the score drops more than a threshold vs. the baseline.
+inputs:
+  api-url:
+    description: Base URL of your deployed Antarctica API
+    required: true
+  url:
+    description: The preview deployment URL to scan
+    required: true
+  baseline-url:
+    description: URL whose latest finished scan is the baseline (e.g. production). Defaults to `url`.
+    required: false
+    default: ""
+  threshold:
+    description: Max allowed score drop in points before the check fails
+    required: false
+    default: "5"
+  github-token:
+    description: Token used to post the PR comment (needs pull-requests write)
+    required: false
+    default: ${{ github.token }}
+outputs:
+  score:
+    description: Performance score of the preview URL
+    value: ${{ steps.check.outputs.score }}
+  baseline:
+    description: Baseline score (empty if none)
+    value: ${{ steps.check.outputs.baseline }}
+  passed:
+    description: "true if within the threshold"
+    value: ${{ steps.check.outputs.passed }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v6
+      with: { python-version: "3.12" }
+    # Inputs go through env vars, never pasted into the script text: a PR title or
+    # URL containing `"; rm -rf /` can't be executed (shell-injection hardening).
+    - id: check
+      shell: bash
+      working-directory: ${{ github.action_path }}/..
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        IN_API: ${{ inputs.api-url }}
+        IN_URL: ${{ inputs.url }}
+        IN_BASELINE: ${{ inputs.baseline-url }}
+        IN_THRESHOLD: ${{ inputs.threshold }}
+      run: >
+        python -m scripts.pr_check --api "$IN_API" --url "$IN_URL"
+        --baseline-url "$IN_BASELINE" --threshold "$IN_THRESHOLD"
