@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Build + deploy both Cloud Run services and wire Pub/Sub push. YOU run this.
 # Usage: PROJECT_ID=my-antarctica REGION=us-central1 ./infra/deploy.sh
+# Optional: FRONTEND_ORIGIN=https://antarctica.vercel.app lets that browser origin call
+# the API (CORS). Several origins: FRONTEND_ORIGIN="https://a.vercel.app,https://b.dev"
 set -euo pipefail
 : "${PROJECT_ID:?set PROJECT_ID}"
 REGION="${REGION:-us-central1}"
@@ -10,6 +12,19 @@ API_SA="antarctica-api@${PROJECT_ID}.iam.gserviceaccount.com"
 SCAN_SA="antarctica-scanner@${PROJECT_ID}.iam.gserviceaccount.com"
 PUSH_SA="antarctica-pusher@${PROJECT_ID}.iam.gserviceaccount.com"
 ENV="PROJECT_ID=${PROJECT_ID},REGION=${REGION}"
+
+# CORS origins for the API. gcloud splits --set-env-vars on commas, so a value that
+# itself contains commas ("a,b") would be cut in two. `gcloud topic escaping`: start
+# the flag value with ^@^ and gcloud splits on "@" instead, leaving commas intact.
+API_ENV="${ENV}"
+if [[ -n "${FRONTEND_ORIGIN:-}" ]]; then
+  if [[ "${FRONTEND_ORIGIN}" == *@* ]]; then
+    echo "FRONTEND_ORIGIN must not contain '@'" >&2; exit 1
+  fi
+  API_ENV="^@^PROJECT_ID=${PROJECT_ID}@REGION=${REGION}@CORS_ORIGINS=${FRONTEND_ORIGIN}"
+else
+  echo "note: FRONTEND_ORIGIN not set; the API will only allow CORS from http://localhost:5173"
+fi
 
 echo "== Build images with Cloud Build (no local Docker needed)"
 gcloud builds submit --config=infra/cloudbuild.yaml \
@@ -28,7 +43,7 @@ gcloud run services add-iam-policy-binding antarctica-scanner --region="$REGION"
 echo "== Deploy API (public)"
 gcloud run deploy antarctica-api --image="${REPO}/api:${TAG}" --region="$REGION" \
   --service-account="$API_SA" --allow-unauthenticated --min-instances=0 --max-instances=3 \
-  --set-env-vars="${ENV}" --set-secrets="DATABASE_URL=database-url:latest"
+  --set-env-vars="${API_ENV}" --set-secrets="DATABASE_URL=database-url:latest"
 
 echo "== Push subscription: Pub/Sub -> scanner, 5 attempts, then dead-letter"
 PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
