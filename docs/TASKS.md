@@ -40,3 +40,10 @@
 
 ### A6: GitHub Action (stretch) ✅ DONE
 > Read AGENTS.md first. Create `action/action.yml` (a composite action) that scans a preview URL on each PR, comments the score and top 3 fixes, and fails if the score drops more than a threshold versus the last scan. Document usage in README.
+
+### A8: MCP server ✅ DONE
+> `mcp_server/server.py`: run_audit, get_report, suggest_fixes, site_history over stdio; in-process client tests. Setup: docs/MCP.md.
+
+### A9: ADK agent (next)
+> Google ADK agent (Gemini) that uses the same four tools in a ReAct loop: audit -> pick worst finding -> get fix -> summarize a prioritized plan. Trace each step (tool, latency, tokens).
+
