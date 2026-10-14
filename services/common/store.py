@@ -15,7 +15,7 @@ does nothing on a duplicate. Same idea as Parallax's duplicate-order protection.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Protocol
 
 from services.common.models import Report, Scan, ScanSummary, StoredFinding
@@ -23,7 +23,7 @@ from services.scanner.parse import ParsedReport
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class Store(Protocol):

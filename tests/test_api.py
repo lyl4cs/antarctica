@@ -22,7 +22,7 @@ def ctx():
 
 
 def test_create_scan_queues_job(ctx):
-    client, store, pub = ctx
+    client, _, pub = ctx
     res = client.post("/scans", json={"url": "https://example.com"})
     assert res.status_code == 202
     scan = res.json()
@@ -48,7 +48,7 @@ def test_report_only_after_done(ctx, scan_result):
 
 
 def test_fixes_503_without_ai(ctx, scan_result):
-    client, store, _ = ctx
+    client, _, _ = ctx
     scan_id = client.post("/scans", json={"url": "https://example.com"}).json()["id"]
     assert client.get(f"/scans/{scan_id}/fixes").status_code == 503
 

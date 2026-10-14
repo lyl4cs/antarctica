@@ -60,7 +60,7 @@ def test_eval_reports_both_modes():
     gen = json.dumps({"diagnosis": "d", "fix": "add loading=lazy", "code": "", "sources_used": []})
     judge_no = json.dumps({"acceptable": False, "reason": "vague"})
     judge_yes = json.dumps({"acceptable": True, "reason": "matches"})
-    results, summary = run([case], ScriptedLLM([gen, gen]), ScriptedLLM([judge_no, judge_yes]),
+    _results, summary = run([case], ScriptedLLM([gen, gen]), ScriptedLLM([judge_no, judge_yes]),
                            make_retriever())
     assert summary["without_rag"]["accepted_rate"] == 0.0
     assert summary["with_rag"]["accepted_rate"] == 1.0

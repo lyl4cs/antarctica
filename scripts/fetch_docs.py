@@ -20,7 +20,7 @@ OUT = Path("data/docs")
 class _TextExtractor(HTMLParser):
     """Keeps headings and paragraph-ish text from <main>/<article>; drops nav, scripts."""
 
-    SKIP = {"script", "style", "nav", "header", "footer", "aside", "svg"}
+    SKIP = frozenset({"script", "style", "nav", "header", "footer", "aside", "svg"})
 
     def __init__(self) -> None:
         super().__init__()

@@ -14,7 +14,7 @@ from __future__ import annotations
 import argparse
 import statistics
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from scripts.api_client import ApiClient
 

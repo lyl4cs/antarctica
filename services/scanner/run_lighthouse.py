@@ -35,7 +35,7 @@ def run_scan(url: str, timeout_s: int = 120) -> ScanResult:
         raise ValueError(f"URL must start with http:// or https://, got {url!r}")
     start = time.perf_counter()
     proc = subprocess.run(
-        [*LIGHTHOUSE_CMD, url], capture_output=True, text=True, timeout=timeout_s
+        [*LIGHTHOUSE_CMD, url], capture_output=True, text=True, timeout=timeout_s, check=False
     )
     duration_ms = (time.perf_counter() - start) * 1000
     if proc.returncode != 0:

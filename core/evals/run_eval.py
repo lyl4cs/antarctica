@@ -86,7 +86,7 @@ def p95(values: list[float]) -> float:
     if not values:
         return 0.0
     ordered = sorted(values)
-    return ordered[min(len(ordered) - 1, int(round(0.95 * (len(ordered) - 1))))]
+    return ordered[min(len(ordered) - 1, round(0.95 * (len(ordered) - 1)))]
 
 
 def summarize(results: list[CaseResult]) -> dict:
