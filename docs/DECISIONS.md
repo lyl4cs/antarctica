@@ -35,9 +35,28 @@ This file is your interview prep: "why did you choose X?" gets answered here.
 **Why:** The rest of the system depends on our shape, not Lighthouse's. If Lighthouse changes its format, you fix one function. Keeping the raw copy means you can re-parse old scans later.
 **Practice:** *Wrap external data at the boundary.*
 
-## 007: Agents write plumbing, the owner writes the AI core
-**Decision:** `core/rag`, `core/agents`, and `core/evals` are written by hand. Everything else can be agent-written and human-reviewed.
-**Why:** Shipping speed where it's commodity work; depth where it'll be interviewed on.
+## 007: AI-written code, human-owned understanding
+**Decision:** Agents (and Claude) may write any part of the code, but every module opens with a docstring explaining how it works and why, and the owner reads and can explain all of it.
+**Why:** Shipping speed matters, and so does being able to defend every line in an interview. (Originally the owner was going to write the AI core by hand; that changed to get the MVP shipped faster.)
 
 ## 008: Credentials never in the repo; agents never deploy
 **Why:** A leaked key or a looping agent can cost real money. The $20 budget alert is the last line of defense, not the first.
+
+## 009: Neon instead of Cloud SQL
+**Decision:** Postgres lives on Neon (serverless Postgres with pgvector), not Cloud SQL.
+**Why:** Cloud SQL bills ~24/7 even when idle; Neon scales to zero and has a free tier. Same Postgres, same SQL, same pgvector, so switching later is just a connection string.
+**Gave up:** Private networking inside GCP. The DB is reached over TLS on the public internet, with credentials kept in Secret Manager.
+
+## 010: Pub/Sub PUSH (not pull) to Cloud Run
+**Decision:** Pub/Sub POSTs each job to the scanner's `/pubsub/push`.
+**Why:** Cloud Run scales on HTTP requests, so with push the scanner scales to zero when idle and up when jobs arrive. A pull worker would need an always-on instance.
+**How ack works:** 2xx = ack, anything else = retry with backoff. After 5 deliveries the message goes to the DLQ. `concurrency=1` because Lighthouse results get noisy when two runs share a CPU.
+
+## 011: Dropped the multi-agent (ADK) design
+**Decision:** One well-grounded LLM call per finding, not a planner/diagnoser/fixer agent loop.
+**Why:** Reviewers called the original "over-engineered", and the eval is what proves quality. A single call is cheaper, faster, and easier to evaluate. Add agents only if the eval shows a single call failing in ways an agent loop would fix.
+
+## 012: LLM-as-judge, with human spot-checks
+**Decision:** The eval uses an LLM to grade fixes against a human-written reference fix.
+**Why:** Grading 60+ outputs by hand every run doesn't scale.
+**Risk:** Judges can be wrong or biased. Mitigation: spot-check 10+ verdicts per run by hand, and report the number only if agreement is high.

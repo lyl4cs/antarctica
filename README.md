@@ -1,42 +1,30 @@
 # Antarctica
 
-**An AI performance auditor for the web, on Google Cloud.** Point it at a URL and it runs Lighthouse, finds what's slowing the page down, and uses a multi-agent system (Google ADK + Gemini) with retrieval over web-performance docs to propose code-level fixes. It also measures whether those fixes are right.
+**A website speed auditor with AI fix suggestions, on Google Cloud.** Submit a URL. Antarctica runs Lighthouse on a queue of Cloud Run workers, stores the results in Postgres, and uses Gemini with retrieval over web-performance docs (RAG on pgvector) to suggest concrete code fixes for each problem. An eval harness measures whether RAG actually improves those fixes.
 
 ```
-          ┌──────────┐   POST /scans   ┌────────────┐  publish  ┌─────────┐
- user /   │ GitHub   │ ──────────────▶ │  API       │ ────────▶ │ Pub/Sub │
- PR ────▶ │ Action   │                 │ Cloud Run  │           │ "scans" │
-          └──────────┘                 └─────┬──────┘           └────┬────┘
-                                             │ read                  │ pull
-                                             ▼                       ▼
-                                    ┌──────────────────┐     ┌──────────────┐
-                                    │ Cloud SQL        │◀────│ Scanner      │
-                                    │ Postgres+pgvector│     │ Lighthouse   │
-                                    └────────┬─────────┘     │ Cloud Run    │
-                                             │ RAG           └──────────────┘
-                                             ▼
-                                    ┌──────────────────┐
-                                    │ ADK agents       │  planner → diagnoser → fixer
-                                    │ Gemini on Vertex │  (ReAct + self-reflection)
-                                    └────────┬─────────┘
-                                             ▼
-                                    evals: accuracy · tokens/sec · p95 · $/audit
+client ──POST /scans──▶ API (Cloud Run) ──publish──▶ Pub/Sub "scans"
+                          │                              │ push (retry w/ backoff, DLQ after 5)
+                          │                              ▼
+                          │                     Scanner (Cloud Run, Lighthouse)
+                          ▼                              │
+                    Postgres (Neon) ◀────────────────────┘   scans · audits · findings
+                    + pgvector       ◀── RAG ── doc_chunks (web.dev + Chrome docs, Vertex embeddings)
+                          │
+              GET /scans/{id}/fixes ──▶ Gemini (Vertex AI) ──▶ fix + code, grounded in sources
+                          │
+                 core/evals: accepted-fix rate with vs. without RAG · p95 · tokens/s · $/request
 ```
 
-## Status
-Early build. See `docs/ROADMAP.md` and `docs/TASKS.md`.
-
-## Run locally
+## Run locally (no cloud needed)
 ```bash
-pip install -e ".[dev]"
-python -m pytest -q
-uvicorn services.api.main:app --reload       # API on :8000
-python -m services.scanner.run_lighthouse https://example.com   # needs: npm i -g lighthouse
+pip install -e ".[dev,ai]"
+python -m pytest -q                         # 18 offline tests
+uvicorn services.api.main:app --reload      # in-memory store + queue
 ```
+
+## Deploy
+See [docs/SETUP.md](docs/SETUP.md). Design decisions and tradeoffs: [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Layout
-- `services/api`: FastAPI service
-- `services/scanner`: Lighthouse runner, parser, and worker
-- `core/rag`, `core/agents`, `core/evals`: the AI system
-- `db/migrations`: Postgres schema (pgvector)
-- `infra`: GCP setup and deploy scripts
+`services/` (API, scanner worker, shared store/queue) · `core/` (LLM clients, RAG, fix suggester, evals) · `infra/` (gcloud scripts) · `db/migrations/` · `scripts/` (doc fetch/ingest)

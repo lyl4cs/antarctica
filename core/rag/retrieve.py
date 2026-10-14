@@ -1,32 +1,96 @@
-"""RAG retrieval. OWNER ONLY (Layth writes this, not agents).
+"""Vector store + retrieval (the "R" in RAG).
 
-You'll be asked about every line of this in interviews. Before you code, answer
-these in a comment block at the top of the file:
-  1. What are you chunking (web.dev articles? past findings?), and how big is each chunk? Why?
-  2. Which embedding model, and how many dimensions? (Vertex text-embedding-005 = 768)
-  3. Cosine or L2 distance? Why does it matter for normalized embeddings?
-  4. What top-k, and how did you pick it? (Measure it with core/evals, don't guess.)
-  5. How do structured data (audit JSON) and unstructured data (docs) get combined in one query?
+HOW IT WORKS
+1. Ingest: chunk docs -> embed each chunk -> store (text, vector).
+2. Query: embed the question -> find the k chunks whose vectors are closest.
+
+DISTANCE: cosine similarity. Our embeddings are length-normalized, so cosine is
+just the dot product, and pgvector's `<=>` operator returns cosine *distance*
+(1 - similarity). The HNSW index (db/migrations/001) makes that search fast
+without scanning every row.
+
+WHY k=5: enough context to cover a fix from a couple of angles, small enough to
+keep the prompt cheap. Check it with the eval: try k=3 and k=8 and compare.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Protocol
+
+from core.llm import Embedder
+from core.rag.chunk import DocChunk
 
 
 @dataclass
-class Chunk:
-    id: str
-    source: str  # "doc" | "finding"
+class RetrievedChunk:
+    source: str
+    heading: str
     text: str
-    score: float  # similarity, higher = more relevant
+    score: float  # cosine similarity, higher = more relevant
 
 
-def embed(texts: list[str]) -> list[list[float]]:
-    """Embed texts with Vertex AI. Returns one vector per text."""
-    raise NotImplementedError
+class VectorStore(Protocol):
+    def add(self, chunks: list[DocChunk], vectors: list[list[float]]) -> None: ...
+    def search(self, vector: list[float], k: int) -> list[RetrievedChunk]: ...
 
 
-def retrieve(query: str, k: int = 5) -> list[Chunk]:
-    """Return the top-k chunks for a query from the doc_chunks table (pgvector)."""
-    raise NotImplementedError
+class InMemoryVectorStore:
+    def __init__(self) -> None:
+        self.items: list[tuple[DocChunk, list[float]]] = []
+
+    def add(self, chunks, vectors) -> None:
+        self.items.extend(zip(chunks, vectors))
+
+    def search(self, vector, k) -> list[RetrievedChunk]:
+        scored = [
+            (sum(a * b for a, b in zip(vector, v)), c) for c, v in self.items
+        ]
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [RetrievedChunk(c.source, c.heading, c.text, s) for s, c in scored[:k]]
+
+
+class PgVectorStore:  # pragma: no cover - needs Postgres + pgvector
+    def __init__(self, database_url: str) -> None:
+        import psycopg
+        from pgvector.psycopg import register_vector
+
+        self._conn = psycopg.connect(database_url, autocommit=True)
+        register_vector(self._conn)
+
+    def add(self, chunks, vectors) -> None:
+        import numpy as np
+
+        with self._conn.cursor() as cur:
+            for c, v in zip(chunks, vectors):
+                cur.execute(
+                    "INSERT INTO doc_chunks (source, ref, content, embedding) "
+                    "VALUES ('doc', %s, %s, %s)",
+                    (c.source, f"{c.heading}\n{c.text}" if c.heading else c.text, np.array(v)),
+                )
+
+    def search(self, vector, k) -> list[RetrievedChunk]:
+        import numpy as np
+
+        rows = self._conn.execute(
+            """SELECT ref, content, 1 - (embedding <=> %s) AS sim
+               FROM doc_chunks ORDER BY embedding <=> %s LIMIT %s""",
+            (np.array(vector), np.array(vector), k),
+        ).fetchall()
+        return [RetrievedChunk(source=r[0], heading="", text=r[1], score=r[2]) for r in rows]
+
+
+class Retriever:
+    def __init__(self, embedder: Embedder, store: VectorStore) -> None:
+        self.embedder, self.store = embedder, store
+
+    def ingest(self, chunks: list[DocChunk]) -> int:
+        if not chunks:
+            return 0
+        vectors = self.embedder.embed([c.text for c in chunks])
+        self.store.add(chunks, vectors)
+        return len(chunks)
+
+    def retrieve(self, query: str, k: int = 5) -> list[RetrievedChunk]:
+        [vector] = self.embedder.embed([query])
+        return self.store.search(vector, k)

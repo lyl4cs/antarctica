@@ -1,23 +1,66 @@
+import json
+
+import pytest
 from fastapi.testclient import TestClient
 
-from services.api.main import app
+from core.llm import HashEmbedder, ScriptedLLM
+from core.rag.chunk import DocChunk
+from core.rag.retrieve import InMemoryVectorStore, Retriever
+from services.api import main
+from services.common.queue import InMemoryPublisher
+from services.common.store import InMemoryStore
 
-client = TestClient(app)
+
+@pytest.fixture
+def ctx():
+    store, pub = InMemoryStore(), InMemoryPublisher()
+    main.app.dependency_overrides[main.get_store] = lambda: store
+    main.app.dependency_overrides[main.get_publisher] = lambda: pub
+    main.app.dependency_overrides[main.get_ai] = lambda: None
+    yield TestClient(main.app), store, pub
+    main.app.dependency_overrides.clear()
 
 
-def test_create_and_get_scan():
+def test_create_scan_queues_job(ctx):
+    client, store, pub = ctx
     res = client.post("/scans", json={"url": "https://example.com"})
     assert res.status_code == 202
     scan = res.json()
     assert scan["status"] == "queued"
-    got = client.get(f"/scans/{scan['id']}")
-    assert got.status_code == 200
-    assert got.json()["url"].startswith("https://example.com")
+    assert pub.jobs == [{"scan_id": scan["id"], "url": scan["url"]}]
+    assert client.get(f"/scans/{scan['id']}").json()["url"].startswith("https://example.com")
 
 
-def test_bad_url_rejected():
+def test_bad_url_and_unknown_scan(ctx):
+    client, _, _ = ctx
     assert client.post("/scans", json={"url": "not a url"}).status_code == 422
-
-
-def test_unknown_scan_404():
     assert client.get("/scans/nope").status_code == 404
+
+
+def test_report_only_after_done(ctx, scan_result):
+    client, store, _ = ctx
+    scan_id = client.post("/scans", json={"url": "https://example.com"}).json()["id"]
+    assert client.get(f"/scans/{scan_id}/report").status_code == 409
+    store.save_result(scan_id, scan_result.report, scan_result.raw, scan_result.duration_ms)
+    rep = client.get(f"/scans/{scan_id}/report").json()
+    assert rep["performance_score"] == 47
+    assert rep["findings"][0]["audit_id"] == "unused-javascript"
+
+
+def test_fixes_503_without_ai(ctx, scan_result):
+    client, store, _ = ctx
+    scan_id = client.post("/scans", json={"url": "https://example.com"}).json()["id"]
+    assert client.get(f"/scans/{scan_id}/fixes").status_code == 503
+
+
+def test_fixes_with_ai(ctx, scan_result):
+    client, store, _ = ctx
+    retriever = Retriever(HashEmbedder(), InMemoryVectorStore())
+    retriever.ingest([DocChunk("web.dev/js", "Unused JS", "Remove unused JavaScript with code splitting")])
+    reply = json.dumps({"diagnosis": "d", "fix": "split bundles", "code": "import()", "sources_used": [1]})
+    main.app.dependency_overrides[main.get_ai] = lambda: (ScriptedLLM([reply]), retriever)
+    scan_id = client.post("/scans", json={"url": "https://example.com"}).json()["id"]
+    store.save_result(scan_id, scan_result.report, scan_result.raw, scan_result.duration_ms)
+    fixes = client.get(f"/scans/{scan_id}/fixes?limit=1").json()
+    assert fixes[0]["fix"] == "split bundles"
+    assert fixes[0]["sources"] == ["web.dev/js"]

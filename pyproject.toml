@@ -15,7 +15,7 @@ dependencies = [
 [project.optional-dependencies]
 ai = [
   "google-genai>=1.0",
-  "google-adk>=1.0",
+  "numpy>=1.26",
 ]
 dev = [
   "pytest>=8",
@@ -24,7 +24,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["services*", "core*"]
+include = ["services*", "core*", "scripts*"]
 
 [tool.ruff]
 line-length = 100

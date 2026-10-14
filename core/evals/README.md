@@ -1,21 +1,10 @@
-# Evals (OWNER ONLY)
+# Evals
 
-These produce the red numbers on the resume, so they have to be real.
+`cases.jsonl` = real findings + the fix you've verified is correct (`reference_fix`).
+See `cases.example.jsonl` for the format. Aim for 30+ cases across 8+ audit types.
 
-## Eval set
-`core/evals/cases.jsonl`: one line per case:
-```json
-{"id": "case-001", "url": "https://...", "audit_id": "render-blocking-resources", "accepted_fix": "Defer non-critical CSS via media=print onload swap", "notes": "..."}
-```
-Target: **30+ cases** from real scans (Orland Park, Novus, and a few public sites).
+Run: `python -m core.evals.run_eval core/evals/cases.jsonl` → prints a summary and saves
+`core/evals/results/<timestamp>.json`.
 
-## Metrics to report
-| Metric | How |
-|---|---|
-| Accepted-fix rate | Share of proposals a judge (you, or an LLM judge you've spot-checked) marks as matching `accepted_fix`. Run it **with RAG and without RAG**. The difference is the resume bullet. |
-| tokens/sec | tokens_out / generation time |
-| p95 latency | Per audit, end to end |
-| Cost per audit | Sum of token costs at current Vertex pricing |
-| Lighthouse before/after | Only on sites where a fix was actually deployed |
-
-Write each run's results to `core/evals/results/<date>.json` so the numbers can be traced.
+Reported metrics: accepted-fix rate (with vs. without RAG), p95 latency, mean latency,
+tokens/sec, cost per request. Read the docstring in `run_eval.py` for the honesty rules.

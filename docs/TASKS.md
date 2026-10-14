@@ -1,39 +1,39 @@
 # Task board
 
-Agent tasks are written so you can paste each one straight into Codex or Claude Code (web).
-Each one fits in a single small PR. Do them **in order**, because later tasks depend on earlier ones.
+## Done (MVP code, tested offline)
+- API: create scan, status, report, AI fixes endpoint
+- Scanner: Pub/Sub push worker, retries with an attempt cap, idempotent saves
+- Store: Postgres (Neon) + in-memory; migrations runner
+- RAG: chunking, Vertex embeddings, pgvector retrieval
+- Fix suggester (Gemini, JSON output, token, latency, and cost tracking)
+- Eval harness: with vs. without RAG, LLM judge, p95, tokens/sec, $/request
+- Infra: setup + deploy scripts (Cloud Run, Pub/Sub push, DLQ, Secret Manager), Cloud Build
+- 18 offline tests + CI
 
----
+## Owner tasks (only you can do these)
+1. GitHub repo, Neon, GCP project + **$20 budget alert**, `setup_gcp.sh`, `deploy.sh` (docs/SETUP.md)
+2. Fetch + ingest docs
+3. Build `core/evals/cases.jsonl`: 30+ real findings with correct reference fixes
+4. Run the eval. Spot-check 10+ judge verdicts by hand
+5. Apply fixes to Novus; measure Lighthouse before/after (median of 3 runs)
+6. **Read every module docstring.** You'll be asked to explain this system in interviews
 
-## Agent tasks
+## Agent tasks: paste into Codex / Claude Code one at a time
 
-### T1: Local dev environment
-> Read AGENTS.md first. Add a `docker-compose.yml` that runs Postgres 16 with pgvector (image `pgvector/pgvector:pg16`) and applies `db/migrations/*.sql` on startup. Add a `Makefile` with targets `dev-db`, `test`, `lint`, and `api` (uvicorn services.api.main:app --reload). Update the README "Run locally" section. Done when `make dev-db && make test` works on a clean machine.
+### A1: Postgres integration tests
+> Read AGENTS.md first. Add `docker-compose.yml` with `pgvector/pgvector:pg16`, and integration tests for `PostgresStore` and `PgVectorStore` that run only when `TEST_DATABASE_URL` is set (skip otherwise). Apply migrations with `infra/migrate.py` in a fixture. Add a separate CI job using a Postgres service container. Done when the integration tests pass in CI.
 
-### T2: API backed by Postgres and Pub/Sub
-> Read AGENTS.md first. In `services/api/main.py`, replace the in-memory `_SCANS` dict with Postgres (psycopg 3, `DATABASE_URL`), using the `scans` table in `db/migrations/001_init.sql`. On `POST /scans`, insert the row, then publish `{"scan_id","url"}` to the Pub/Sub topic in `SCAN_TOPIC`. Put the publisher behind a small interface so tests use a fake. Add `GET /scans/{id}/report`, which returns the audit metrics and findings once status='done'. Keep the existing tests passing and add tests that run against the docker-compose DB. Done when tests pass and the README shows a curl example.
+### A2: Scan history + re-scan endpoint
+> Read AGENTS.md first. Add `GET /sites/scans?url=...` returning past scans for a URL (newest first) and their performance scores, so before/after comparisons are one call. Add a migration if needed. Tests with InMemoryStore. Done when tests pass.
 
-### T3: Scanner worker
-> Read AGENTS.md first. Implement `services/scanner/worker.py` following the contract in its docstring: Pub/Sub streaming pull on `SCAN_SUBSCRIPTION`, run `run_scan`, write `audits` and `findings` rows in one transaction, update the scan's status, attempts, duration_ms, and finished_at, and ack only after commit. After 3 failed attempts set status='failed'. Test the DB write path with a fixture report (don't run real Lighthouse in tests). Done when tests pass.
+### A3: Before/after measurement script
+> Read AGENTS.md first. Add `scripts/measure.py URL --runs 3 --api $API`. It submits N scans, waits for completion, and prints the median performance score, LCP, TBT, and CLS. Explain in the docstring why we use the median of several runs (Lighthouse variance). Mock HTTP in tests.
 
-### T4: Deploy scripts (owner runs them)
-> Read AGENTS.md first. Write `infra/deploy_api.sh` and `infra/deploy_scanner.sh`. They build with Cloud Build into Artifact Registry `antarctica`, deploy the API as a Cloud Run **service** and the scanner as a Cloud Run **service** with min-instances=0 and a Pub/Sub push or pull setup (explain which one you chose in the PR). Read PROJECT_ID and REGION from env. Use Cloud SQL connector settings (`--add-cloudsql-instances`). Do NOT run them. Done when `bash -n` passes and the PR lists the exact commands for the owner.
+### A4: Eval case builder
+> Read AGENTS.md first. Add `scripts/build_cases.py`. It takes scan IDs, pulls their findings via the API, and writes a draft `cases.jsonl` with `reference_fix` left empty for the owner to fill in. Deduplicate by audit_id per URL. Tests with a fake API.
 
-### T5: Docs ingestion pipeline (data only, no retrieval logic)
-> Read AGENTS.md first. Create `scripts/fetch_docs.py`, which downloads about 40 web.dev and developer.chrome.com articles on Core Web Vitals and Lighthouse audits (put the URL list in `scripts/doc_urls.txt`), strips them to clean text, and saves them to `data/docs/<slug>.md` with the source URL at the top. Do NOT chunk or embed (the owner does that in core/rag). Done when the script runs and produces clean markdown.
+### A5: Minimal web UI
+> Read AGENTS.md first. Add a single static page served by the API at `/`: URL input → submit → polls status → shows score, top findings, and fix suggestions. Plain HTML + vanilla JS, no framework. Keep it under 300 lines.
 
-### T6: GitHub Action
-> Read AGENTS.md first. Create a composite GitHub Action in `action/` (`action.yml`). It takes inputs `api_url` and `target_url`, calls `POST /scans`, polls until done, and comments the performance score plus the top 3 findings on the PR. Fail the check if the score drops more than a configurable threshold compared with the last scan of the same URL (add an API endpoint for "last scan for URL" if you need one). Done when it works against a local API in a test workflow.
-
----
-
-## Owner tasks (you, no agents)
-
-- **O1: GCP setup.** Create the project, set a $20 budget alert, run `infra/setup_gcp.sh`.
-- **O2: Read every agent PR before merging.** If you can't explain a line, ask the agent or me.
-- **O3: RAG.** Chunking, embeddings (Vertex), pgvector retrieval in `core/rag/retrieve.py`. Answer the 5 questions at the top of the file first.
-- **O4: Agents.** ADK planner → diagnoser → fixer with self-reflection in `core/agents/pipeline.py`.
-- **O5: Eval set.** 30+ real cases in `core/evals/cases.jsonl` (scan Orland Park, Novus, and public sites).
-- **O6: Measure.** Accepted-fix rate with and without RAG, tokens/sec, p95, and cost per audit. These fill the resume.
-- **O7: Discovery.** Talk to the Orland Park web team and Novus about what they'd want fixed. Write notes in `docs/discovery.md`.
-- **O8: Deploy** (run T4's scripts) and get one real fix live on a real site, so you have a before/after Lighthouse number.
+### A6: GitHub Action (stretch)
+> Read AGENTS.md first. Create `action/action.yml` (a composite action) that scans a preview URL on each PR, comments the score and top 3 fixes, and fails if the score drops more than a threshold versus the last scan. Document usage in README.
