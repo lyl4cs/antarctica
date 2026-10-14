@@ -60,3 +60,8 @@ This file is your interview prep: "why did you choose X?" gets answered here.
 **Decision:** The eval uses an LLM to grade fixes against a human-written reference fix.
 **Why:** Grading 60+ outputs by hand every run doesn't scale.
 **Risk:** Judges can be wrong or biased. Mitigation: spot-check 10+ verdicts per run by hand, and report the number only if agreement is high.
+
+## 013: PR check compares against a baseline URL, fails open on AI
+**Decision:** The GitHub Action compares the preview's score against the newest finished scan of `baseline-url` (usually production), and falls back to plain Lighthouse findings if the AI endpoint errors.
+**Why:** Preview deploys get a fresh URL per PR, so "last scan of this URL" usually doesn't exist; production is the real comparison. And a perf gate shouldn't go red because Gemini had a bad minute: only the *score* can fail the check.
+**Tradeoff:** Lighthouse is noisy (±3–5 points run to run), so the default threshold is 5. A single-run gate will occasionally flake; raising the threshold or scanning 3× and taking the median (like `scripts/measure.py`) are the fixes if it does.
