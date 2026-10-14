@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Antarctica — Report</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Instrument+Sans:wght@400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#FBF8F2}
+a{color:#174E78}a:hover{color:#12202B}
+.navlink{padding:10px 16px;border-radius:999px;text-decoration:none;color:#3C4A55;font-weight:500;font-size:15px}
+.navlink:hover{background:#F1ECE1;color:#12202B}
+.pill{transition:transform .15s ease, box-shadow .15s ease;cursor:pointer}
+.pill:hover{transform:translateY(-1px);box-shadow:0 0 0 5px rgba(255,255,255,.9),0 14px 32px rgba(18,32,43,.14),0 1px 2px rgba(18,32,43,.08)}
+.ghost{cursor:pointer}
+.ghost:hover{background:#F1ECE1}
+.src:hover{background:#E6F1F8}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin .9s linear infinite}
+@keyframes shimmer{0%{opacity:.45}50%{opacity:1}100%{opacity:.45}}
+.shimmer{animation:shimmer 1.4s ease-in-out infinite}
+pre{margin:0}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #FBF8F2; color: #12202B; font-family: 'Instrument Sans', system-ui, sans-serif;">
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 24px 96px; box-sizing: border-box;">
+
+<header style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 22px 0;">
+<a href="Main.dc.html" aria-label="Antarctica home" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #12202B;">
+<svg width="38" height="38" viewBox="0 0 48 48" aria-hidden="true">
+<polygon points="11,42.5 37,42.5 33,46.5 15,46.5" fill="#6FB8E3" opacity="0.45"></polygon>
+<polygon points="9,40 15,30 33,30 39,40" fill="#DDF1FB"></polygon>
+<polygon points="33,30 39,40 29,40" fill="#9ED6F1"></polygon>
+<polygon points="9,40 15,30 33,30 39,40" fill="none" stroke="#174E78" stroke-width="1.4" stroke-linejoin="round"></polygon>
+<line x1="4" y1="41" x2="44" y2="41" stroke="#2F7FB9" stroke-width="1.6" stroke-linecap="round"></line>
+<g transform="translate(24,30.5) scale(0.27)">
+<ellipse cx="-62" cy="-6" rx="9" ry="6" fill="#F2A33A" stroke="#12202B" stroke-width="5"></ellipse>
+<path d="M -58 -2 C -66 -30 -40 -60 2 -60 C 44 -60 68 -40 66 -18 C 64 0 48 2 0 2 C -36 2 -54 4 -58 -2 Z" fill="#2B3A47" stroke="#12202B" stroke-width="6" stroke-linejoin="round"></path>
+<ellipse cx="34" cy="-28" rx="22" ry="17" fill="#FFFFFF"></ellipse>
+<path d="M 24 -33 Q 30 -27 36 -33" fill="none" stroke="#12202B" stroke-width="5" stroke-linecap="round"></path>
+<path d="M 38 -26 Q 43 -14 48 -26 Z" fill="#F2A33A" stroke="#12202B" stroke-width="3.5" stroke-linejoin="round"></path>
+</g>
+</svg>
+<span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 23px; letter-spacing: -0.03em;">antarctica</span>
+</a>
+<nav aria-label="Primary" style="display: flex; gap: 4px; align-items: center;">
+<a href="Main.dc.html" class="navlink">New scan</a>
+<a href="History.dc.html" class="navlink">History</a>
+</nav>
+</header>
+
+<section style="display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 20px; padding: 28px 0 32px;">
+<div style="display: flex; flex-direction: column; gap: 10px; min-width: 0;">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5B6670;">Report</span>
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: clamp(36px, 5vw, 60px); line-height: 1; letter-spacing: -0.04em; overflow-wrap: anywhere;">northwind.shop</h1>
+<p style="margin: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 15px; color: #5B6670;">
+<span>Finished <strong style="color: #12202B; font-weight: 600;">Oct 14, 2026 · 3:24 PM</strong></span>
+<span>Took <strong style="color: #12202B; font-weight: 600;">41 s</strong></span>
+<span>Attempt <strong style="color: #12202B; font-weight: 600;">1</strong></span>
+</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
+<a href="History.dc.html" class="ghost" style="display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 999px; text-decoration: none; font-weight: 600; font-size: 16px; color: #174E78;">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6l4 4l8-8"></path><path d="M15 7h6v6"></path></svg>
+Site history</a>
+<a href="ScanRunning.dc.html" class="pill" style="display: inline-flex; align-items: center; gap: 16px; padding: 6px 6px 6px 24px; min-height: 56px; box-sizing: border-box; border-radius: 999px; background: #FFFFFF; color: #12202B; text-decoration: none; font-weight: 600; font-size: 16px; border: 1px solid #EFEAE0; box-shadow: 0 0 0 5px rgba(255,255,255,.75), 0 10px 26px rgba(18,32,43,.09), 0 1px 2px rgba(18,32,43,.08);">
+<span>Scan again</span>
+<span style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; background: #2F7FB9; color: #FFFFFF;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg>
+</span>
+</a>
+</div>
+</section>
+
+<section aria-label="Score and core metrics" style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch;">
+<div style="flex: 1 1 340px; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; padding: 28px; border-radius: 30px; background: #FFFFFF; border: 1px solid #ECE6DA;">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5B6670;">Performance</span>
+<span style="padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; background: {{scoreBand.bg}}; color: {{scoreBand.fg}};">{{scoreBand.label}}</span>
+</div>
+<div style="display: flex; align-items: baseline; gap: 8px;">
+<span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 128px; line-height: 0.85; letter-spacing: -0.05em;">{{score}}</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 18px; color: #5B6670;">/ 100</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<div aria-hidden="true" style="height: 46px; display: flex; align-items: flex-end; justify-content: space-between; gap: 2px;">
+<sc-for list="{{scoreTicks}}" as="t" hint-placeholder-count="51">
+<span style="width: 2px; border-radius: 2px; height: {{t.h}}px; background: {{t.c}};"></span>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: 50fr 40fr 10fr; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5B6670;">
+<span>0 · poor</span><span>50 · needs work</span><span style="text-align: right;">90+</span>
+</div>
+</div>
+</div>
+
+<div style="flex: 999 1 560px; min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 14px;">
+<sc-for list="{{metrics}}" as="m" hint-placeholder-count="5">
+<article style="display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 24px; background: #FFFFFF; border: 1px solid #ECE6DA;">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #3C4A55;">{{m.key}}</span>
+<span style="padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: {{m.bg}}; color: {{m.fg}};">{{m.rating}}</span>
+</div>
+<span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 36px; line-height: 1; letter-spacing: -0.03em;">{{m.display}}</span>
+<span style="font-size: 13px; line-height: 1.35; color: #5B6670;">{{m.name}}</span>
+<div aria-hidden="true" style="position: relative; display: flex; gap: 2px; height: 6px; margin-top: 4px;">
+<span style="width: {{m.wg}}; border-radius: 6px 0 0 6px; background: #8EC1E6;"></span>
+<span style="width: {{m.wn}}; background: #F0C27E;"></span>
+<span style="width: {{m.wp}}; border-radius: 0 6px 6px 0; background: #E79A8A;"></span>
+<span style="position: absolute; top: -5px; left: {{m.pos}}; width: 4px; height: 16px; margin-left: -2px; border-radius: 4px; background: #12202B; box-shadow: 0 0 0 2px #FFFFFF;"></span>
+</div>
+</article>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="findings-h" style="display: flex; flex-direction: column; gap: 18px; padding-top: 56px;">
+<div style="display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<h2 id="findings-h" style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 36px; letter-spacing: -0.03em;">Below the waterline</h2>
+<p style="margin: 0; font-size: 16px; color: #5B6670;">5 findings, biggest estimated savings first.</p>
+</div>
+<p style="margin: 0; font-size: 13px; color: #5B6670; max-width: 40ch;">Savings are estimated per finding and overlap, so they don’t add up to a total.</p>
+</div>
+
+<sc-for list="{{findings}}" as="f" hint-placeholder-count="5">
+<article style="display: flex; flex-direction: column; gap: 20px; padding: 24px; border-radius: 26px; background: #FFFFFF; border: 1px solid {{f.border}};">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px;">
+<div style="display: flex; gap: 18px; flex: 1 1 440px; min-width: 0; align-items: flex-start;">
+<span style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex: none; border-radius: 999px; background: #EAF5FB; color: #174E78; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600;">{{f.rank}}</span>
+<div style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+<h3 style="margin: 0; font-size: 19px; font-weight: 650; letter-spacing: -0.01em;">{{f.title}}</h3>
+<p style="margin: 0; font-size: 15px; line-height: 1.5; color: #3C4A55;">{{f.desc}}</p>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px;">
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; background: #12202B; color: #FFFFFF; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500;">−{{f.msLabel}}</span>
+<sc-if value="{{f.hasBytes}}" hint-placeholder-val="{{ true }}">
+<span style="display: inline-flex; align-items: center; padding: 5px 11px; border-radius: 999px; background: #F1ECE1; color: #3C4A55; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500;">−{{f.bytesLabel}}</span>
+</sc-if>
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; background: {{f.band.bg}}; color: {{f.band.fg}}; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500;">score {{f.score}}</span>
+</div>
+</div>
+</div>
+
+<sc-if value="{{f.isIdle}}" hint-placeholder-val="{{ true }}">
+<button type="button" class="pill" onClick="{{f.onGet}}" style="display: inline-flex; align-items: center; gap: 14px; padding: 6px 6px 6px 22px; min-height: 56px; box-sizing: border-box; border-radius: 999px; background: #FFFFFF; color: #12202B; font: inherit; font-weight: 600; font-size: 16px; border: 1px solid #EFEAE0; box-shadow: 0 0 0 5px rgba(251,248,242,.95), 0 8px 22px rgba(18,32,43,.09), 0 1px 2px rgba(18,32,43,.08);">
+<span>Get AI fix</span>
+<span style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; background: #2F7FB9; color: #FFFFFF;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l1.9 5.6l5.6 1.9l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9z"></path><path d="M18.5 15l.8 2.2l2.2.8l-2.2.8l-.8 2.2l-.8-2.2l-2.2-.8l2.2-.8z"></path></svg>
+</span>
+</button>
+</sc-if>
+<sc-if value="{{f.isLoading}}" hint-placeholder-val="{{ false }}">
+<button type="button" disabled style="display: inline-flex; align-items: center; gap: 14px; padding: 6px 6px 6px 22px; min-height: 56px; box-sizing: border-box; border-radius: 999px; background: #F6F3EC; color: #5B6670; font: inherit; font-weight: 600; font-size: 16px; border: 1px solid #EFEAE0;">
+<span>Writing fix…</span>
+<span style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; background: #DCEBF4;">
+<svg class="spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F7FB9" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9"></path></svg>
+</span>
+</button>
+</sc-if>
+<sc-if value="{{f.isDone}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="ghost" onClick="{{f.onHide}}" aria-expanded="true" style="display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 999px; border: 0; background: transparent; font: inherit; font-weight: 600; font-size: 15px; color: #174E78;">
+Hide fix
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6l6 6"></path></svg>
+</button>
+</sc-if>
+</div>
+
+<sc-if value="{{f.isLoading}}" hint-placeholder-val="{{ false }}">
+<div class="shimmer" style="display: flex; flex-direction: column; gap: 10px; padding: 24px; border-radius: 20px; background: #F4F9FC; border: 1px solid #DCEBF4;">
+<span style="height: 12px; width: 38%; border-radius: 6px; background: #DCEBF4;"></span>
+<span style="height: 12px; width: 82%; border-radius: 6px; background: #DCEBF4;"></span>
+<span style="height: 12px; width: 64%; border-radius: 6px; background: #DCEBF4;"></span>
+</div>
+</sc-if>
+
+<sc-if value="{{f.isDone}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 22px; padding: 24px; border-radius: 20px; background: #F4F9FC; border: 1px solid #DCEBF4;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 24px;">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #174E78;">Diagnosis</span>
+<p style="margin: 0; font-size: 15px; line-height: 1.6; color: #12202B;">{{f.diagnosis}}</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #174E78;">Fix</span>
+<p style="margin: 0; font-size: 15px; line-height: 1.6; color: #12202B;">{{f.fix}}</p>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: #0F1C26;">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 8px 8px 18px; border-bottom: 1px solid #22333F;">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #9DB3C2;">{{f.lang}}</span>
+<button type="button" onClick="{{f.onCopy}}" aria-label="Copy code" style="display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 0; background: #1C2D39; color: #E6F1F8; font-family: 'Instrument Sans', system-ui, sans-serif; font-size: 13px; font-weight: 600; cursor: pointer;">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path></svg>
+{{f.copyLabel}}</button>
+</div>
+<pre style="padding: 18px 20px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 13.5px; line-height: 1.65; color: #E6F1F8; white-space: pre;">{{f.code}}</pre>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px;">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+<span style="font-size: 13px; font-weight: 600; color: #5B6670; margin-right: 4px;">Sources</span>
+<sc-for list="{{f.sources}}" as="s" hint-placeholder-count="2">
+<a href="{{s.href}}" class="src" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 999px; background: #FFFFFF; border: 1px solid #DCEBF4; text-decoration: none; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: #174E78;">{{s.label}}
+<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"></path><path d="M8 7h9v9"></path></svg></a>
+</sc-for>
+</div>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5B6670;">AI fix · written in {{f.latency}}</span>
+</div>
+</div>
+</sc-if>
+</article>
+</sc-for>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2700}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { fixes: { a: 'done' }, copied: null };
+    this.timers = [];
+  }
+  componentWillUnmount() {
+    this.timers.forEach((t) => clearTimeout(t));
+  }
+  band(s) {
+    if (s >= 90) return { label: 'Good', fg: '#174E78', bg: '#E1EFF9', bar: '#2F7FB9' };
+    if (s >= 50) return { label: 'Needs work', fg: '#8A4E0B', bg: '#FBEBD3', bar: '#D98A2B' };
+    return { label: 'Poor', fg: '#9A2F1E', bg: '#F8DDD6', bar: '#C2452D' };
+  }
+  fmtMs(v) {
+    return v >= 1000 ? (v / 1000).toFixed(1) + ' s' : Math.round(v) + ' ms';
+  }
+  fmtBytes(b) {
+    if (!b) return '';
+    return b >= 1000000 ? (b / 1000000).toFixed(1) + ' MB' : Math.round(b / 1000) + ' KB';
+  }
+  setFix(id, val) {
+    this.setState((s) => {
+      const fixes = Object.assign({}, s.fixes);
+      if (val) fixes[id] = val; else delete fixes[id];
+      return { fixes };
+    });
+  }
+  getFix(id) {
+    this.setFix(id, 'loading');
+    this.timers.push(setTimeout(() => this.setFix(id, 'done'), 1600));
+  }
+  copy(id, code) {
+    try { navigator.clipboard.writeText(code); } catch (e) {}
+    this.setState({ copied: id });
+    this.timers.push(setTimeout(() => this.setState({ copied: null }), 1500));
+  }
+  renderVals() {
+    const st = this.state || { fixes: {} };
+    const score = 54;
+
+    const metricDefs = [
+      { key: 'LCP', name: 'Largest Contentful Paint', v: 4820, g: 2500, p: 4000 },
+      { key: 'TBT', name: 'Total Blocking Time', v: 410, g: 200, p: 600 },
+      { key: 'CLS', name: 'Cumulative Layout Shift', v: 0.02, g: 0.1, p: 0.25, unitless: true },
+      { key: 'FCP', name: 'First Contentful Paint', v: 2140, g: 1800, p: 3000 },
+      { key: 'SI', name: 'Speed Index', v: 5230, g: 3400, p: 5800 }
+    ];
+    const metrics = metricDefs.map((m) => {
+      const max = m.p * 1.5;
+      const rating = m.v <= m.g ? 'Good' : m.v <= m.p ? 'Needs work' : 'Poor';
+      const b = rating === 'Good' ? this.band(95) : rating === 'Poor' ? this.band(10) : this.band(60);
+      const pct = (x) => (x * 100).toFixed(2) + '%';
+      return {
+        key: m.key,
+        name: m.name,
+        display: m.unitless ? m.v.toFixed(2) : this.fmtMs(m.v),
+        rating,
+        bg: b.bg,
+        fg: b.fg,
+        wg: pct(m.g / max),
+        wn: pct((m.p - m.g) / max),
+        wp: pct((max - m.p) / max),
+        pos: pct(Math.min(m.v / max, 1))
+      };
+    });
+
+    const scoreBand = this.band(score);
+    const scoreTicks = [];
+    for (let i = 0; i <= 100; i += 2) {
+      const near = Math.exp(-Math.pow(i - score, 2) / (2 * 49));
+      scoreTicks.push({
+        h: Math.round(10 + 32 * near),
+        c: i === score ? '#12202B' : i < score ? scoreBand.bar : '#DDD6C7'
+      });
+    }
+
+    const data = [
+      {
+        id: 'a', title: 'Properly size images', ms: 1860, bytes: 412000, score: 21,
+        desc: 'Serve images that are appropriately sized to save cellular data and improve load time.',
+        diagnosis: 'Your hero image, hero-summer.jpg, is 3200×2133 but renders at 1280×853 on desktop and 390×260 on phones. Every visitor downloads the full file, and it is also your LCP element.',
+        fix: 'Export three widths and let the browser choose with srcset and sizes. Keep the hero eager and high priority, since it is what LCP measures.',
+        lang: 'html',
+        code: `<img
+  src="/img/hero-1280.jpg"
+  srcset="/img/hero-640.jpg 640w,
+          /img/hero-1280.jpg 1280w,
+          /img/hero-1920.jpg 1920w"
+  sizes="(max-width: 640px) 100vw, 1280px"
+  width="1280" height="853"
+  fetchpriority="high"
+  alt="Summer collection">`,
+        sources: [
+          { label: 'web.dev/articles/serve-responsive-images', href: 'https://web.dev/articles/serve-responsive-images' },
+          { label: 'web.dev/articles/optimize-lcp', href: 'https://web.dev/articles/optimize-lcp' }
+        ],
+        latency: '3.8 s', cost: '$0.0042'
+      },
+      {
+        id: 'b', title: 'Eliminate render-blocking resources', ms: 1240, bytes: 96000, score: 38,
+        desc: 'Resources are blocking the first paint of your page. Deliver critical CSS inline and defer the rest.',
+        diagnosis: 'Two stylesheets and a font loader in <head> block first paint: theme.css (64 KB), slider.css (18 KB) and fonts.js (14 KB). Only about 6 KB of theme.css styles anything above the fold.',
+        fix: 'Inline the critical CSS, load the full stylesheet without blocking, and defer the font loader.',
+        lang: 'html',
+        code: `<style>/* critical above-the-fold CSS, ~6 KB */</style>
+<link rel="preload" href="/css/theme.css" as="style"
+      onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="/css/theme.css"></noscript>
+<script src="/js/fonts.js" defer><\/script>`,
+        sources: [
+          { label: 'web.dev/articles/defer-non-critical-css', href: 'https://web.dev/articles/defer-non-critical-css' },
+          { label: 'web.dev/articles/extract-critical-css', href: 'https://web.dev/articles/extract-critical-css' }
+        ],
+        latency: '4.1 s', cost: '$0.0047'
+      },
+      {
+        id: 'c', title: 'Reduce unused JavaScript', ms: 980, bytes: 287000, score: 44,
+        desc: 'Reduce unused JavaScript and defer loading scripts until they are required.',
+        diagnosis: 'carousel.bundle.js (212 KB) loads on every page, but the carousel only appears on the homepage, below the fold. 74% of its bytes never run on this URL.',
+        fix: 'Split the carousel into its own chunk and import it only when its container scrolls into view.',
+        lang: 'javascript',
+        code: `const el = document.querySelector('[data-carousel]');
+
+if (el) {
+  new IntersectionObserver(async ([entry], obs) => {
+    if (!entry.isIntersecting) return;
+    obs.disconnect();
+    const { mountCarousel } = await import('./carousel.js');
+    mountCarousel(el);
+  }).observe(el);
+}`,
+        sources: [
+          { label: 'web.dev/articles/reduce-javascript-payloads-with-code-splitting', href: 'https://web.dev/articles/reduce-javascript-payloads-with-code-splitting' }
+        ],
+        latency: '3.2 s', cost: '$0.0038'
+      },
+      {
+        id: 'd', title: 'Serve images in next-gen formats', ms: 640, bytes: 318000, score: 52,
+        desc: 'Image formats like WebP and AVIF often provide better compression than PNG or JPEG.',
+        diagnosis: '18 product thumbnails are JPEG or PNG. AVIF versions would be roughly 60% smaller at the same visual quality.',
+        fix: 'Serve AVIF first, with WebP and JPEG fallbacks, using a picture element.',
+        lang: 'html',
+        code: `<picture>
+  <source srcset="/img/p-104.avif" type="image/avif">
+  <source srcset="/img/p-104.webp" type="image/webp">
+  <img src="/img/p-104.jpg" width="320" height="320"
+       loading="lazy" alt="Rose serum">
+</picture>`,
+        sources: [
+          { label: 'web.dev/articles/compress-images-avif', href: 'https://web.dev/articles/compress-images-avif' },
+          { label: 'web.dev/articles/choose-the-right-image-format', href: 'https://web.dev/articles/choose-the-right-image-format' }
+        ],
+        latency: '2.9 s', cost: '$0.0029'
+      },
+      {
+        id: 'e', title: 'Reduce initial server response time', ms: 410, bytes: 0, score: 61,
+        desc: 'Keep the server response time for the main document short, because all other requests depend on it.',
+        diagnosis: 'The HTML took 820 ms to start arriving. Its response headers say cache-control: no-store, so every visit re-renders the page on your origin server.',
+        fix: 'Let your CDN cache the HTML for a few minutes and serve a stale copy while it revalidates.',
+        lang: 'http header',
+        code: `Cache-Control: public, max-age=0, s-maxage=300, stale-while-revalidate=86400`,
+        sources: [
+          { label: 'web.dev/articles/optimize-ttfb', href: 'https://web.dev/articles/optimize-ttfb' }
+        ],
+        latency: '3.5 s', cost: '$0.0035'
+      }
+    ];
+
+    const findings = data
+      .slice()
+      .sort((x, y) => y.ms - x.ms)
+      .map((f, i) => {
+        const fs = (st.fixes || {})[f.id];
+        return Object.assign({}, f, {
+          rank: String(i + 1).padStart(2, '0'),
+          msLabel: this.fmtMs(f.ms),
+          bytesLabel: this.fmtBytes(f.bytes),
+          hasBytes: f.bytes > 0,
+          band: this.band(f.score),
+          isIdle: !fs,
+          isLoading: fs === 'loading',
+          isDone: fs === 'done',
+          border: fs === 'done' ? '#CFE3F0' : '#ECE6DA',
+          copyLabel: st.copied === f.id ? 'Copied' : 'Copy',
+          onGet: () => this.getFix(f.id),
+          onHide: () => this.setFix(f.id, null),
+          onCopy: () => this.copy(f.id, f.code)
+        });
+      });
+
+    return { score, scoreBand, scoreTicks, metrics, findings };
+  }
+}
+</script>
+</body>
+</html>

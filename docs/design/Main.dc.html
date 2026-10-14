@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Antarctica — Home</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Instrument+Sans:wght@400..700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#FBF8F2}
+a{color:#174E78}a:hover{color:#12202B}
+.navlink{padding:10px 16px;border-radius:999px;text-decoration:none;color:#3C4A55;font-weight:500;font-size:15px}
+.navlink:hover{background:#F1ECE1;color:#12202B}
+.pill{transition:transform .15s ease, box-shadow .15s ease}
+.pill:hover{transform:translateY(-1px);box-shadow:0 0 0 6px rgba(255,255,255,.9),0 16px 36px rgba(18,32,43,.14),0 1px 2px rgba(18,32,43,.08)}
+.field:focus-within{box-shadow:0 0 0 3px #BEE3F5,0 10px 30px rgba(18,32,43,.08)}
+.field input:focus{outline:none}
+.field input::placeholder{color:#8A939A}
+.row:hover{border-color:#BEE3F5}
+@keyframes zz{0%,100%{opacity:.35;transform:translate(0,2px)}50%{opacity:1;transform:translate(3px,-4px)}}
+.zz{animation:zz 2.8s ease-in-out infinite;transform-box:fill-box}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #FBF8F2; color: #12202B; font-family: 'Instrument Sans', system-ui, sans-serif;">
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 24px 72px; box-sizing: border-box;">
+
+<header style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 22px 0;">
+<a href="Main.dc.html" aria-label="Antarctica home" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #12202B;">
+<svg width="38" height="38" viewBox="0 0 48 48" aria-hidden="true">
+<polygon points="11,42.5 37,42.5 33,46.5 15,46.5" fill="#6FB8E3" opacity="0.45"></polygon>
+<polygon points="9,40 15,30 33,30 39,40" fill="#DDF1FB"></polygon>
+<polygon points="33,30 39,40 29,40" fill="#9ED6F1"></polygon>
+<polygon points="9,40 15,30 33,30 39,40" fill="none" stroke="#174E78" stroke-width="1.4" stroke-linejoin="round"></polygon>
+<line x1="4" y1="41" x2="44" y2="41" stroke="#2F7FB9" stroke-width="1.6" stroke-linecap="round"></line>
+<g transform="translate(24,30.5) scale(0.27)">
+<ellipse cx="-62" cy="-6" rx="9" ry="6" fill="#F2A33A" stroke="#12202B" stroke-width="5"></ellipse>
+<path d="M -58 -2 C -66 -30 -40 -60 2 -60 C 44 -60 68 -40 66 -18 C 64 0 48 2 0 2 C -36 2 -54 4 -58 -2 Z" fill="#2B3A47" stroke="#12202B" stroke-width="6" stroke-linejoin="round"></path>
+<ellipse cx="34" cy="-28" rx="22" ry="17" fill="#FFFFFF"></ellipse>
+<path d="M 24 -33 Q 30 -27 36 -33" fill="none" stroke="#12202B" stroke-width="5" stroke-linecap="round"></path>
+<path d="M 38 -26 Q 43 -14 48 -26 Z" fill="#F2A33A" stroke="#12202B" stroke-width="3.5" stroke-linejoin="round"></path>
+</g>
+</svg>
+<span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 23px; letter-spacing: -0.03em;">antarctica</span>
+</a>
+<nav aria-label="Primary" style="display: flex; gap: 4px; align-items: center;">
+<a href="Main.dc.html" class="navlink" style="color: #12202B; background: #F1ECE1;">New scan</a>
+<a href="History.dc.html" class="navlink">History</a>
+</nav>
+</header>
+
+<main style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(480px, 100%), 1fr)); gap: 56px; align-items: center; padding: 48px 0 64px;">
+<section style="display: flex; flex-direction: column; gap: 28px;">
+<div style="display: flex; flex-direction: column; gap: 20px;">
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: clamp(44px, 5.6vw, 76px); line-height: 0.98; letter-spacing: -0.04em; text-wrap: balance;">See the whole iceberg.</h1>
+<p style="margin: 0; font-size: 19px; line-height: 1.55; color: #3C4A55; max-width: 34ch; text-wrap: pretty;">Antarctica measures how fast your page really loads, then writes a fix for every problem it finds, with the code and the docs to back it up.</p>
+</div>
+
+<form style="display: flex; flex-direction: column; gap: 10px;">
+<label for="scan-url" style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5B6670;">Website URL</label>
+<div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center;">
+<div class="field" style="flex: 1 1 300px; min-width: 0; display: flex; align-items: center; gap: 12px; min-height: 64px; box-sizing: border-box; padding: 0 22px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E6DFD1; box-shadow: 0 10px 30px rgba(18,32,43,.06);">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5B6670" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"></path></svg>
+<input id="scan-url" type="url" placeholder="https://yoursite.com" style="flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; font-size: 18px; color: #12202B; height: 60px;">
+</div>
+<a href="ScanRunning.dc.html" class="pill" style="display: inline-flex; align-items: center; gap: 18px; padding: 8px 8px 8px 28px; min-height: 64px; box-sizing: border-box; border-radius: 999px; background: #FFFFFF; color: #12202B; text-decoration: none; font-weight: 600; font-size: 18px; border: 1px solid #EFEAE0; box-shadow: 0 0 0 6px rgba(255,255,255,.75), 0 10px 30px rgba(18,32,43,.10), 0 1px 2px rgba(18,32,43,.08);">
+<span>Scan site</span>
+<span style="display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 999px; background: #2F7FB9; color: #FFFFFF;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M13 6l6 6l-6 6"></path></svg>
+</span>
+</a>
+</div>
+<p style="margin: 4px 0 0; font-size: 14px; color: #5B6670;">A scan takes about 30–60 seconds.</p>
+</form>
+</section>
+
+<figure style="margin: 0; position: relative; border-radius: 36px; overflow: hidden; background: #F3F8FA; border: 1px solid #E4EEF2; aspect-ratio: 520 / 460;">
+<svg viewBox="0 0 520 460" width="100%" height="100%" style="display: block;" role="img" aria-label="An iceberg with a sleeping penguin hugging a fish on top. Above the waterline is the score; below it, the findings slowing the page down.">
+<rect x="0" y="170" width="520" height="290" fill="#D3EAF7"></rect>
+<rect x="0" y="330" width="520" height="130" fill="#C4E2F3"></rect>
+<polygon points="120,176 420,176 470,250 440,340 360,410 230,420 140,370 90,280" fill="#8CC9EA"></polygon>
+<polygon points="120,176 260,176 230,300 90,280" fill="#A6D6F0"></polygon>
+<polygon points="260,176 420,176 470,250 330,300" fill="#7FC0E6"></polygon>
+<polygon points="90,280 230,300 230,420 140,370" fill="#72B6DF"></polygon>
+<polygon points="230,300 330,300 360,410 230,420" fill="#5EA9D9"></polygon>
+<polygon points="330,300 470,250 440,340 360,410" fill="#4F9BD0"></polygon>
+<polygon points="150,170 195,105 222,94 238,58 314,58 332,92 354,100 392,170" fill="#D9F0FB"></polygon>
+<polygon points="150,170 195,105 222,94 238,170" fill="#F6FCFE"></polygon>
+<polygon points="314,58 332,92 354,100 392,170 284,170 298,58" fill="#A9DCF3"></polygon>
+<polygon points="332,92 354,100 392,170 344,170" fill="#8FD0EE"></polygon>
+<polygon points="234,62 240,55 312,55 318,62 308,67 292,63 276,68 260,63 246,66" fill="#FFFFFF"></polygon>
+<line x1="0" y1="170" x2="520" y2="170" stroke="#FFFFFF" stroke-width="3"></line>
+<line x1="96" y1="184" x2="128" y2="184" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.8"></line>
+<line x1="410" y1="190" x2="452" y2="190" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.8"></line>
+<g transform="translate(276,58) scale(0.5)">
+<ellipse cx="0" cy="3" rx="68" ry="7" fill="#12202B" opacity="0.10"></ellipse>
+<ellipse cx="-63" cy="-15" rx="9" ry="5.5" fill="#F2A33A" stroke="#12202B" stroke-width="3" transform="rotate(-20 -63 -15)"></ellipse>
+<ellipse cx="-62" cy="-4" rx="9" ry="5.5" fill="#F2A33A" stroke="#12202B" stroke-width="3"></ellipse>
+<path d="M -58 -2 C -66 -30 -40 -60 2 -60 C 44 -60 68 -40 66 -18 C 64 0 48 2 0 2 C -36 2 -54 4 -58 -2 Z" fill="#2B3A47" stroke="#12202B" stroke-width="3.5" stroke-linejoin="round"></path>
+<path d="M -46 -2 C -48 -16 -28 -25 2 -25 C 34 -25 56 -18 57 -8 C 57 -1 44 -1 0 -1 C -24 -1 -42 0 -46 -2 Z" fill="#FFFFFF"></path>
+<ellipse cx="36" cy="-28" rx="20" ry="16" fill="#FFFFFF"></ellipse>
+<path d="M 26 -33 Q 30 -29 34 -33" fill="none" stroke="#12202B" stroke-width="2.6" stroke-linecap="round"></path>
+<path d="M 40 -33 Q 44 -29 48 -33" fill="none" stroke="#12202B" stroke-width="2.6" stroke-linecap="round"></path>
+<ellipse cx="24" cy="-24" rx="4" ry="2.5" fill="#F6A9A0" opacity="0.85"></ellipse>
+<ellipse cx="50" cy="-24" rx="4" ry="2.5" fill="#F6A9A0" opacity="0.85"></ellipse>
+<path d="M 33.5 -27 Q 37 -19 40.5 -27 Z" fill="#F2A33A" stroke="#12202B" stroke-width="2" stroke-linejoin="round"></path>
+<path d="M -32 -20 L -42 -29 L -40 -20 L -42 -11 Z" fill="#6FB8E3" stroke="#12202B" stroke-width="2.6" stroke-linejoin="round"></path>
+<path d="M -32 -20 C -24 -32 2 -32 10 -20 C 2 -8 -24 -8 -32 -20 Z" fill="#6FB8E3" stroke="#12202B" stroke-width="2.6"></path>
+<circle cx="2" cy="-22" r="1.8" fill="#12202B"></circle>
+<path d="M -12 -27 Q -8 -20 -12 -13" fill="none" stroke="#12202B" stroke-width="1.8" stroke-linecap="round" opacity="0.45"></path>
+<path d="M -10 -47 C 2 -41 6 -25 -2 -13 C -6 -8 -13 -10 -12 -17 C -10 -27 -16 -39 -10 -47 Z" fill="#2B3A47" stroke="#12202B" stroke-width="3" stroke-linejoin="round"></path>
+<g class="zz">
+<path d="M 60 -68 h 9 l -9 10 h 9" fill="none" stroke="#2F7FB9" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M 75 -86 h 6 l -6 7 h 6" fill="none" stroke="#2F7FB9" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
+</g>
+</g>
+</svg>
+<div style="position: absolute; left: 66%; top: 8%; display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 8px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 8px 24px rgba(18,32,43,.10);">
+<span style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 999px; background: #FBEBD3; color: #8A4E0B; font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 14px;">54</span>
+<span style="font-size: 13px; font-weight: 600; color: #12202B; white-space: nowrap;">Your score</span>
+</div>
+<div style="position: absolute; left: 6%; top: 50%; display: flex; flex-direction: column; align-items: flex-start; gap: 10px;">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #174E78;">Below the waterline</span>
+<div style="display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 14px; background: rgba(255,255,255,.94); box-shadow: 0 6px 18px rgba(18,32,43,.08); font-size: 14px; white-space: nowrap;"><span style="font-weight: 600;">Oversized hero image</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #174E78;">−1.9 s</span></div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 14px; background: rgba(255,255,255,.94); box-shadow: 0 6px 18px rgba(18,32,43,.08); font-size: 14px; white-space: nowrap;"><span style="font-weight: 600;">Render-blocking CSS</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #174E78;">−1.2 s</span></div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 14px; background: rgba(255,255,255,.94); box-shadow: 0 6px 18px rgba(18,32,43,.08); font-size: 14px; white-space: nowrap;"><span style="font-weight: 600;">Unused JavaScript</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #174E78;">−1.0 s</span></div>
+</div>
+</figure>
+</main>
+
+<section aria-labelledby="recent-h" style="display: flex; flex-direction: column; gap: 16px;">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+<h2 id="recent-h" style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 650; font-size: 24px; letter-spacing: -0.02em;">Recent scans</h2>
+<a href="History.dc.html" style="font-size: 15px; font-weight: 600;">All history</a>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 14px;">
+<a href="Report.dc.html" class="row" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; min-height: 76px; box-sizing: border-box; border-radius: 22px; background: #FFFFFF; border: 1px solid #ECE6DA; text-decoration: none; color: #12202B;">
+<span style="display: flex; flex-direction: column; gap: 4px; min-width: 0;"><span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">northwind.shop</span><span style="font-size: 13px; color: #5B6670;">Today, 3:25 PM</span></span>
+<span style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; background: #FBEBD3; color: #8A4E0B; font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 15px; flex: none;">54</span>
+</a>
+<a href="Report.dc.html" class="row" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; min-height: 76px; box-sizing: border-box; border-radius: 22px; background: #FFFFFF; border: 1px solid #ECE6DA; text-decoration: none; color: #12202B;">
+<span style="display: flex; flex-direction: column; gap: 4px; min-width: 0;"><span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">fieldnotes.blog</span><span style="font-size: 13px; color: #5B6670;">Yesterday, 9:12 AM</span></span>
+<span style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; background: #E1EFF9; color: #174E78; font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 15px; flex: none;">93</span>
+</a>
+<a href="Report.dc.html" class="row" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; min-height: 76px; box-sizing: border-box; border-radius: 22px; background: #FFFFFF; border: 1px solid #ECE6DA; text-decoration: none; color: #12202B;">
+<span style="display: flex; flex-direction: column; gap: 4px; min-width: 0;"><span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">studio-kite.dev/work</span><span style="font-size: 13px; color: #5B6670;">Oct 11, 4:40 PM</span></span>
+<span style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; background: #F8DDD6; color: #9A2F1E; font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 15px; flex: none;">32</span>
+</a>
+</div>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
