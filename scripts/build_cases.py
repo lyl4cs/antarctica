@@ -39,6 +39,9 @@ def build_cases(client: ApiClient, scan_ids: list[str], out: Path) -> int:
                 "title": f["title"],
                 "description": f.get("description", ""),
                 "savings_ms": f.get("savings_ms"),
+                # v2 evidence, so the eval prompt matches production exactly
+                "offenders": f.get("offenders", []),
+                "platform": report.get("platform"),
                 "reference_fix": "",
             })
     out.write_text("".join(json.dumps(r) + "\n" for r in rows))

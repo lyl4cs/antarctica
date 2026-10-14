@@ -23,9 +23,10 @@ import json
 import statistics
 import sys
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+from core.fixes.context import Offender, platform_from_dict
 from core.fixes.suggest import FindingInput, FixSuggestion, suggest_fix
 from core.llm import LLM
 from core.rag.retrieve import Retriever
@@ -50,6 +51,10 @@ class Case:
     description: str
     reference_fix: str
     savings_ms: float | None = None
+    # v2 evidence (optional; cases built before v2 simply don't have it). Carried in
+    # the case so the eval prompt matches production exactly.
+    offenders: list[dict] = field(default_factory=list)
+    platform: dict | None = None
 
 
 @dataclass
@@ -113,7 +118,9 @@ def run(cases: list[Case], llm: LLM, judge_llm: LLM, retriever: Retriever | None
     results: list[CaseResult] = []
     for case in cases:
         finding = FindingInput(case.url, case.audit_id, case.title, case.description,
-                               case.savings_ms)
+                               case.savings_ms,
+                               offenders=[Offender(**o) for o in case.offenders],
+                               platform=platform_from_dict(case.platform))
         for use_rag in (False, True):
             s = suggest_fix(finding, llm, retriever, use_rag=use_rag, k=k)
             ok, reason = judge(judge_llm, case, s)

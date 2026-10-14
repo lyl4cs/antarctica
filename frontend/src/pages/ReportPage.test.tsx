@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { mockFetch, scanFixture } from "../test/http";
-import { ReportPage, fixLimitFor } from "./ReportPage";
+import { ReportPage, fixLimitFor, shortResource } from "./ReportPage";
 
 const finding = (i: number) => ({
   id: i + 1,
@@ -109,5 +109,43 @@ describe("ReportPage", () => {
     mockFetch(() => ({ status: 409, body: { detail: "scan is running, no report yet" } }));
     renderReport();
     expect(await screen.findByText("SCAN PAGE")).toBeInTheDocument();
+  });
+});
+
+describe("v2 evidence on the report", () => {
+  it("shortens resource URLs to host + file", () => {
+    expect(shortResource("https://cdn.x.com/a/b/hero-1920.jpg?v=3")).toBe("cdn.x.com/…/hero-1920.jpg");
+    expect(shortResource("https://x.com/app.js")).toBe("x.com/app.js");
+    expect(shortResource("not a url")).toBe("not a url");
+  });
+
+  it("shows the detected platform and the worst files per finding", async () => {
+    const withEvidence = {
+      ...report,
+      platform: { id: "wordpress", name: "WordPress", evidence: ["Lighthouse detected WordPress"] },
+      findings: [
+        {
+          ...finding(0),
+          offenders: [0, 1, 2, 3].map((i) => ({
+            url: `https://shop.test/img/hero-${i}.jpg`,
+            wasted_kb: 400 - i * 50,
+            wasted_ms: null,
+            total_kb: 500,
+          })),
+        },
+        finding(1),
+      ],
+    };
+    mockFetch((u) => (u.pathname.endsWith("/report") ? { body: withEvidence } : undefined));
+    renderReport();
+    expect(await screen.findByText("WordPress")).toBeInTheDocument();
+    const links = screen.getAllByRole("link", { name: /hero-\d\.jpg/ });
+    expect(links.map((a) => a.textContent)).toEqual([
+      "shop.test/…/hero-0.jpg",
+      "shop.test/…/hero-1.jpg",
+      "shop.test/…/hero-2.jpg",
+    ]);
+    expect(screen.getByText("−400 KB")).toBeInTheDocument();
+    expect(screen.getAllByText("Worst files")).toHaveLength(1); // finding 1 has no offenders
   });
 });

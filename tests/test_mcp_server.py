@@ -76,7 +76,20 @@ def test_summarize_converts_to_seconds_and_trims():
     assert s["metrics"]["lcp_s"] == 5.14 and s["metrics"]["cls"] == 0.0
     assert len(s["top_findings"]) == 5 and s["total_findings"] == 8
     assert s["top_findings"][0] == {"audit_id": "audit-0", "title": "Finding 0",
-                                    "est_savings_s": 1.0, "est_savings_kb": 2}
+                                    "est_savings_s": 1.0, "est_savings_kb": 2,
+                                    "worst_resources": []}
+    assert s["platform"] is None
+
+
+def test_summarize_includes_platform_and_worst_resources():
+    rep = {**REPORT, "platform": {"id": "wordpress", "name": "WordPress"},
+           "findings": [{**REPORT["findings"][0], "offenders": [
+               {"url": f"https://a.com/{i}.jpg", "wasted_kb": 100 - i, "wasted_ms": None}
+               for i in range(5)]}]}
+    s = summarize_report(rep)
+    assert s["platform"] == "WordPress"
+    assert s["top_findings"][0]["worst_resources"] == [
+        {"url": f"https://a.com/{i}.jpg", "wasted_kb": 100 - i} for i in range(3)]
 
 
 def test_server_lists_four_tools_with_schemas():

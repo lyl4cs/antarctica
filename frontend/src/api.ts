@@ -34,6 +34,21 @@ export interface Scan {
 }
 
 /** services/common/models.py: StoredFinding. `score` is Lighthouse's 0..1 audit score. */
+/** One resource behind a finding (v2 evidence), worst first. */
+export interface Offender {
+  url: string;
+  wasted_kb: number | null;
+  wasted_ms: number | null;
+  total_kb: number | null;
+}
+
+/** What the site is built on, detected from evidence (never assumed). */
+export interface Platform {
+  id: string;
+  name: string;
+  evidence: string[];
+}
+
 export interface StoredFinding {
   id: number;
   audit_id: string;
@@ -42,6 +57,8 @@ export interface StoredFinding {
   score: number | null;
   savings_ms: number | null;
   savings_bytes: number | null;
+  /** Optional so reports from an older API still type-check. */
+  offenders?: Offender[];
 }
 
 /** Keys of Report.metrics (services/scanner/parse.py: Metrics minus performance_score). */
@@ -53,6 +70,7 @@ export interface Report {
   performance_score: number | null;
   metrics: Partial<Record<MetricKey, number | null>>;
   findings: StoredFinding[];
+  platform?: Platform | null;
 }
 
 /** services/common/models.py: ScanSummary */
