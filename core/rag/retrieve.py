@@ -16,7 +16,7 @@ keep the prompt cheap. Check it with the eval: try k=3 and k=8 and compare.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, Self
 
 from core.llm import Embedder
 from core.rag.chunk import DocChunk
@@ -63,7 +63,7 @@ class PgVectorStore:  # pragma: no cover - needs Postgres + pgvector
     def close(self) -> None:
         self._conn.close()
 
-    def __enter__(self) -> PgVectorStore:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *exc) -> None:
