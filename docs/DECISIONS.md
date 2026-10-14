@@ -65,3 +65,10 @@ This file is your interview prep: "why did you choose X?" gets answered here.
 **Decision:** The GitHub Action compares the preview's score against the newest finished scan of `baseline-url` (usually production), and falls back to plain Lighthouse findings if the AI endpoint errors.
 **Why:** Preview deploys get a fresh URL per PR, so "last scan of this URL" usually doesn't exist; production is the real comparison. And a perf gate shouldn't go red because Gemini had a bad minute: only the *score* can fail the check.
 **Tradeoff:** Lighthouse is noisy (±3–5 points run to run), so the default threshold is 5. A single-run gate will occasionally flake; raising the threshold or scanning 3× and taking the median (like `scripts/measure.py`) are the fixes if it does.
+
+## 015: MCP server wraps the HTTP API over stdio
+**Decision:** The MCP server is a thin client of the public API (not the database), launched by the assistant over stdio.
+**Why:** One code path for every client (web UI, GitHub Action, MCP), no database credentials on laptops, and stdio needs no port or auth for local use. Tool results are trimmed (seconds, top findings, deduped sources) because tool output spends the model's context.
+**Tradeoff:** `run_audit` blocks for up to ~90 s while the scan runs. Fine for an assistant conversation; a remote multi-user deployment would switch to streamable HTTP with auth and return the scan id immediately instead.
+**Known gap:** the API itself is unauthenticated, so anyone with the URL can trigger scans and paid fix calls. Acceptable for a portfolio project with a budget alert; the fix is an API key or IAP in front of Cloud Run.
+
