@@ -89,6 +89,8 @@ export interface FixOut {
   sources: string[];
   latency_ms: number;
   cost_usd: number;
+  /** Site URLs in the fix whose folder the audit never saw (possible invented paths). */
+  unverified_urls?: string[];
 }
 
 export class ApiError extends Error {

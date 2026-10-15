@@ -57,3 +57,6 @@
 ### A11: Fix quality v2 ✅ DONE
 > Offending resources, platform detection (stack packs + URL fingerprints), per-audit guides, cited+deduped sources. Report shows "Worst files" and the platform; MCP summaries include them. See ADR 018.
 
+### A12: Fix polish ✅ DONE
+> URL verification against audit evidence (`core/fixes/verify.py`), stricter one-snippet prompt, inline code rendering, warning UI, MCP passthrough. ADR 019.
+
