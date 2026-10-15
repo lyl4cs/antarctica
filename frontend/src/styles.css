@@ -1063,6 +1063,9 @@ button:disabled {
   flex-direction: column;
   gap: 10px;
   min-width: 0;
+  /* Grow and shrink so a longer meta row (the measurement conditions) wraps
+     inside this column instead of pushing the actions onto their own line. */
+  flex: 1 1 360px;
 }
 .page-head h1 {
   margin: 0;
@@ -1445,6 +1448,69 @@ button:disabled {
   margin: 0;
   font-size: 15px;
   line-height: 1.6;
+}
+.explain {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+}
+.explain-btn {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  padding: 0;
+  border: 1px solid var(--tick-soft);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--faint);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+.explain-btn:hover,
+.explain-btn[aria-expanded="true"] {
+  border-color: var(--blue);
+  background: var(--good-bg);
+  color: var(--blue-deep);
+}
+.explain-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+.explain-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  z-index: 20;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: max-content;
+  max-width: min(300px, 78vw);
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--white);
+  box-shadow: 0 10px 30px rgb(18 32 43 / 14%);
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--muted);
+  white-space: normal;
+}
+.explain-pop strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.conditions {
+  /* sits in the report's meta row with the other spans */
+  cursor: help;
 }
 .fix-note {
   font-size: 13px;

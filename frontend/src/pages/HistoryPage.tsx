@@ -16,6 +16,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api, ApiError, type Report, type ScanSummary } from "../api";
+import { Explain } from "../components/Explain";
+import { comparabilityProblems, hostSpeedGap } from "../lib/conditions";
 import { ArrowRightIcon, GlobeIcon, RetryIcon, SpinnerIcon } from "../components/Icons";
 import { ScoreChip } from "../components/ScoreChip";
 import { EmptyState, ErrorState, Loading } from "../components/States";
@@ -287,6 +289,9 @@ function Comparison({
   const as = after.performance_score;
   const sd = bs !== null && as !== null ? scoreDelta(bs, as) : null;
 
+  const problems = comparabilityProblems(rb?.conditions, ra?.conditions);
+  const hostGap = problems.length === 0 ? hostSpeedGap(rb?.conditions, ra?.conditions) : null;
+
   return (
     <div className="diff">
       <div className="diff-score">
@@ -306,6 +311,23 @@ function Comparison({
         )}
       </div>
       <div className="diff-table-wrap">
+        {problems.length > 0 && (
+          <div className="fix-warning" role="note">
+            <strong>These two scans aren’t directly comparable.</strong> They weren’t measured the
+            same way, so the differences below are partly a settings change, not just your site:
+            <ul>
+              {problems.map((p) => (
+                <li key={p}>{p}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {hostGap !== null && (
+          <div className="fix-warning" role="note">
+            <strong>Small changes here may not be real.</strong> These two scans ran on machines
+            about {hostGap}% apart in speed, and throttling is relative to the machine.
+          </div>
+        )}
         {loadError ? (
           <p className="form-error" role="alert" style={{ padding: "16px 0" }}>
             Couldn’t load the reports to compare. {loadError}
@@ -332,7 +354,8 @@ function Comparison({
                 return (
                   <tr key={def.key}>
                     <th scope="row">
-                      <span className="k">{def.key}</span> <span className="n">{def.name}</span>
+                      <span className="k">{def.key}</span> <span className="n">{def.name}</span>{" "}
+                      <Explain label={def.name}>{def.help}</Explain>
                     </th>
                     <td className="b">{formatMetric(def, b)}</td>
                     <td className="a">{formatMetric(def, a)}</td>

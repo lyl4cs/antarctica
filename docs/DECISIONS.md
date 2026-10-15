@@ -149,3 +149,57 @@ is unaffected. Numbers measured before this change aren't comparable to numbers 
 entries come from real use; Webflow, Squarespace, Wix, Drupal and Magento are educated
 guesses, and are flagged in CONTRIBUTING.md as the best place for someone with that
 domain knowledge to correct it.
+
+## ADR 022: Store and show the conditions a score was measured under
+
+**Context.** A reader asked to see the device/network profile and the Lighthouse
+version next to the score, so before/after comparisons would be interpretable. He was
+describing a correctness problem, not a display preference. A Lighthouse score only
+means something relative to the emulated device, the throttling, and the engine that
+weighted the metrics. The default run emulates a mid-range phone on a throttled
+connection with the CPU slowed 4x; the same page measured as desktop with no
+throttling scores far higher without changing. Major Lighthouse versions reweight the
+metrics. We already shipped a history chart and a two-scan diff that presented
+differences as facts about the site, with no way for anyone to know whether the two
+runs were even measured the same way.
+
+**Decision.** Capture the conditions per scan and surface them in two places.
+
+`parse_conditions` pulls `lighthouseVersion`, `configSettings.formFactor`,
+`throttlingMethod`, the throttling numbers, and `environment.benchmarkIndex` out of the
+raw report. Migration 004 stores them as columns on `audits`, and `Report.conditions`
+serves them. The report header shows a line like "Mobile, slow 4G, 4x CPU slowdown,
+Lighthouse 12.8.2". Before a two-scan diff renders, `comparabilityProblems` checks
+whether the two runs match, and the UI says they aren't comparable instead of showing a
+diff that means nothing.
+
+**Columns, not a jsonb blob.** The metrics beside them are columns, and the history list
+reads these per scan; extracting from `audits.raw` on every row would detoast a ~500 KB
+document each time. All columns are nullable so scans recorded before this keep working
+and report unknown.
+
+**benchmarkIndex, which nobody asked for.** Lighthouse throttles relative to the machine
+it runs on, so a slower or busier Cloud Run instance makes the simulated phone slower
+too. It is the most likely reason an unchanged site moves a few points between runs, and
+without it that looks like a bug in the tool. It is shown as context on the report and
+as a note when two compared scans ran on machines far apart in speed. It is deliberately
+NOT a comparability check: it varies on nearly every run, so blocking on it would block
+almost every comparison.
+
+**Major versions only.** Scoring weights are stable within a Lighthouse major, so 12.2
+against 12.8 compares fine and only a major difference is flagged.
+
+**Lighthouse is now pinned exactly** in the scanner Dockerfile, not to `@12`. A floating
+version silently shifts every score on the next image rebuild and puts an invisible
+break in every site's history. Bumping it is now a deliberate commit.
+
+**Comparability lives in the frontend.** The diff is computed client-side from two
+reports, which is the only consumer today, so the rule is in `frontend/src/lib/conditions.ts`
+with its own tests rather than duplicated server-side for a caller that doesn't exist.
+If the MCP server ever needs it, it moves to Python and the frontend calls it.
+
+**Also: a "?" on every metric.** The same reasoning applies one level down. The target
+user knows their site is slow but has not heard of Total Blocking Time, so each metric
+carries a plain-English explanation on the report and in the history diff, sourced from
+one `help` field on `METRICS` so both read the same text. It is a button, not a `title`
+attribute, because `title` never appears on touch and isn't keyboard reachable.

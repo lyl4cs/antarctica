@@ -48,6 +48,37 @@ def test_save_result_and_report(clean_db, scan_result):
                                                      "render-blocking-resources"]
 
 
+def test_conditions_round_trip_through_postgres(clean_db, scan_result):
+    """The SELECT in get_report reads these by position, so a column added in the
+    wrong place would silently shift every value. Check the actual numbers."""
+    store = PostgresStore(clean_db)
+    scan = store.create_scan("https://a.com")
+    store.save_result(scan.id, scan_result.report, scan_result.raw, 1234.0)
+
+    c = store.get_report(scan.id).conditions
+    assert c.lighthouse_version == "12.2.1"
+    assert c.form_factor == "mobile"
+    assert c.throttling_method == "simulate"
+    assert c.cpu_slowdown == 4
+    assert c.rtt_ms == 150
+    assert c.throughput_kbps == 1638.4
+    assert c.benchmark_index == 1250.5
+    # and the metrics next to them didn't shift
+    assert store.get_report(scan.id).metrics["lcp_ms"] == 5320.2
+
+
+def test_report_with_unknown_conditions_still_loads(clean_db, scan_result):
+    """Rows written before migration 004 have NULLs in every new column."""
+    store = PostgresStore(clean_db)
+    scan = store.create_scan("https://a.com")
+    scan_result.report.conditions = type(scan_result.report.conditions)()
+    store.save_result(scan.id, scan_result.report, scan_result.raw, 1.0)
+
+    report = store.get_report(scan.id)
+    assert report.conditions.form_factor is None
+    assert report.performance_score == 47  # the rest of the report is unaffected
+
+
 def test_duplicate_delivery_writes_once(clean_db, scan_result):
     store = PostgresStore(clean_db)
     scan = store.create_scan("https://a.com")

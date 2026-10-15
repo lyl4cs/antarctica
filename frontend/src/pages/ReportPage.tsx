@@ -24,7 +24,17 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { api, ApiError, type FixOut, type Offender, type Report, type StoredFinding } from "../api";
+import {
+  api,
+  ApiError,
+  type Conditions,
+  type FixOut,
+  type Offender,
+  type Report,
+  type StoredFinding,
+} from "../api";
+import { Explain } from "../components/Explain";
+import { describeConditions } from "../lib/conditions";
 import {
   ChevronIcon,
   CopyIcon,
@@ -154,6 +164,7 @@ function MetricCards({ metrics }: { metrics: Report["metrics"] }) {
           <li key={def.key} className="metric">
             <div className="metric-head">
               <span className="metric-key">{def.key}</span>
+              <Explain label={def.name}>{def.help}</Explain>
               <span className={`metric-rating tone-${r.tone}`}>{r.label}</span>
             </div>
             <span className="metric-value">{formatMetric(def, value)}</span>
@@ -240,6 +251,31 @@ function WhereNote({ where }: { where?: string }) {
         <Inline text={where} />
       </p>
     </div>
+  );
+}
+
+/**
+ * The settings behind the score, next to it. A bare "47" doesn't say whether it
+ * was a throttled phone or an unthrottled desktop, and those differ by tens of
+ * points on the same page. Host speed is in the tooltip rather than the line,
+ * because it explains small swings between runs of an unchanged site.
+ */
+function ConditionsLine({ conditions }: { conditions?: Conditions }) {
+  const summary = describeConditions(conditions);
+  if (!summary) return null;
+  const bench = conditions?.benchmark_index;
+  return (
+    <span
+      className="conditions"
+      title={
+        bench
+          ? `Measured on a worker with benchmark index ${Math.round(bench)}. ` +
+            "Throttling is relative to the host machine, so a slower worker lowers the score a little."
+          : undefined
+      }
+    >
+      Measured as <strong>{summary}</strong>
+    </span>
   );
 }
 
@@ -520,6 +556,7 @@ export function ReportPage() {
                 Attempt <strong>{scan.attempts}</strong>
               </span>
             )}
+            <ConditionsLine conditions={report.conditions} />
           </p>
         </div>
         <div className="page-actions">

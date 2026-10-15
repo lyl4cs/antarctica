@@ -32,11 +32,52 @@ class Finding(BaseModel):
     savings_bytes: float | None
 
 
+class Conditions(BaseModel):
+    """The settings a score was measured under, and how fast the machine was.
+
+    A Lighthouse score is meaningless on its own: the same page scores far higher
+    as "desktop, no throttling" than as the default throttled mobile phone, and
+    major Lighthouse versions reweight the metrics. Two scans are only comparable
+    if these match, so we store them per scan and show them next to the score.
+
+    `benchmark_index` is Lighthouse's measure of how fast the HOST machine was.
+    Throttling is relative to that host, so a busy or slower Cloud Run instance
+    makes the simulated phone slower too. It is why an unchanged site can move a
+    few points between runs, and without it that looks like a bug in the tool.
+    """
+
+    lighthouse_version: str | None = None
+    form_factor: str | None = None            # "mobile" | "desktop"
+    throttling_method: str | None = None      # "simulate" | "devtools" | "provided"
+    cpu_slowdown: float | None = None         # multiplier, e.g. 4
+    rtt_ms: float | None = None               # simulated round-trip time
+    throughput_kbps: float | None = None      # simulated download throughput
+    benchmark_index: float | None = None      # host speed, NOT a property of the site
+
+
 class ParsedReport(BaseModel):
     url: str
     lighthouse_version: str | None
+    conditions: Conditions = Conditions()
     metrics: Metrics
     findings: list[Finding]
+
+
+def parse_conditions(lhr: dict) -> Conditions:
+    """Measurement settings out of a Lighthouse result. Missing keys stay None:
+    an older or hand-supplied report should still parse."""
+    cfg = lhr.get("configSettings") or {}
+    throttling = cfg.get("throttling") or {}
+    env = lhr.get("environment") or {}
+    return Conditions(
+        lighthouse_version=lhr.get("lighthouseVersion"),
+        form_factor=cfg.get("formFactor"),
+        throttling_method=cfg.get("throttlingMethod"),
+        cpu_slowdown=throttling.get("cpuSlowdownMultiplier"),
+        rtt_ms=throttling.get("rttMs"),
+        throughput_kbps=throttling.get("throughputKbps"),
+        benchmark_index=env.get("benchmarkIndex"),
+    )
 
 
 def parse_report(lhr: dict) -> ParsedReport:
@@ -80,6 +121,7 @@ def parse_report(lhr: dict) -> ParsedReport:
     return ParsedReport(
         url=lhr.get("finalDisplayedUrl") or lhr.get("finalUrl") or lhr.get("requestedUrl", ""),
         lighthouse_version=lhr.get("lighthouseVersion"),
+        conditions=parse_conditions(lhr),
         metrics=metrics,
         findings=findings,
     )

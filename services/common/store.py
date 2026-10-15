@@ -21,7 +21,14 @@ from typing import Protocol
 from urllib.parse import urlsplit
 
 from core.fixes.context import slim_lhr
-from services.common.models import Report, Scan, ScanSummary, Stats, StoredFinding
+from services.common.models import (
+    ConditionsOut,
+    Report,
+    Scan,
+    ScanSummary,
+    Stats,
+    StoredFinding,
+)
 from services.scanner.parse import ParsedReport
 
 
@@ -90,6 +97,7 @@ class InMemoryStore:
             scan=scan,
             performance_score=rep.metrics.performance_score,
             metrics=rep.metrics.model_dump(exclude={"performance_score"}),
+            conditions=ConditionsOut(**rep.conditions.model_dump()),
             findings=findings,
         )
 
@@ -185,13 +193,16 @@ class PostgresStore:  # pragma: no cover - exercised against a real DB
             ).fetchone()[0]
             if status == "done":
                 return False
-            m = report.metrics
+            m, cond = report.metrics, report.conditions
             c.execute(
                 """INSERT INTO audits (scan_id, lighthouse_version, performance_score, fcp_ms,
-                       lcp_ms, tbt_ms, cls, speed_index_ms, raw)
-                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                       lcp_ms, tbt_ms, cls, speed_index_ms, form_factor, throttling_method,
+                       cpu_slowdown, rtt_ms, throughput_kbps, benchmark_index, raw)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
                 (scan_id, report.lighthouse_version, m.performance_score, m.fcp_ms, m.lcp_ms,
-                 m.tbt_ms, m.cls, m.speed_index_ms, Jsonb(raw)),
+                 m.tbt_ms, m.cls, m.speed_index_ms, cond.form_factor, cond.throttling_method,
+                 cond.cpu_slowdown, cond.rtt_ms, cond.throughput_kbps, cond.benchmark_index,
+                 Jsonb(raw)),
             )
             for f in report.findings:
                 c.execute(
@@ -220,7 +231,9 @@ class PostgresStore:  # pragma: no cover - exercised against a real DB
             return None
         with self._conn() as c:
             a = c.execute(
-                """SELECT performance_score, fcp_ms, lcp_ms, tbt_ms, cls, speed_index_ms
+                """SELECT performance_score, fcp_ms, lcp_ms, tbt_ms, cls, speed_index_ms,
+                          lighthouse_version, form_factor, throttling_method, cpu_slowdown,
+                          rtt_ms, throughput_kbps, benchmark_index
                    FROM audits WHERE scan_id=%s""",
                 (scan_id,),
             ).fetchone()
@@ -233,7 +246,10 @@ class PostgresStore:  # pragma: no cover - exercised against a real DB
         return Report(
             scan=scan,
             performance_score=a[0],
-            metrics=dict(zip(["fcp_ms", "lcp_ms", "tbt_ms", "cls", "speed_index_ms"], a[1:])),
+            metrics=dict(zip(["fcp_ms", "lcp_ms", "tbt_ms", "cls", "speed_index_ms"], a[1:6])),
+            conditions=ConditionsOut(**dict(zip(
+                ["lighthouse_version", "form_factor", "throttling_method", "cpu_slowdown",
+                 "rtt_ms", "throughput_kbps", "benchmark_index"], a[6:]))),
             findings=[StoredFinding(**dict(zip(keys, r))) for r in rows],
         )
 
