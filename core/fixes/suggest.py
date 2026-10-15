@@ -23,7 +23,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 
-from core.fixes.context import Offender, Platform, audit_guide
+from core.fixes.context import Offender, Platform, audit_guide, placement
 from core.fixes.verify import unverified_urls
 from core.llm import LLM, Completion
 from core.rag.retrieve import RetrievedChunk, Retriever
@@ -35,7 +35,7 @@ Audit: {audit_id}
 Title: {title}
 Details: {description}
 Estimated savings: {savings}
-{guide_block}{platform_block}{offenders_block}
+{guide_block}{platform_block}{placement_block}{offenders_block}
 {sources_block}
 Give ONE concrete fix a developer could apply today, for THIS audit only.
 Rules:
@@ -44,6 +44,9 @@ Rules:
   version) goes in the SAME folder as the original.
 - Fit the fix to the detected platform; if the platform is unknown, give a plain
   HTML/server fix.
+- "Where to put it" above is already shown to the user. Write "fix" so it agrees
+  with it, and never name a file inside their project that is not listed there:
+  you have not seen their code.
 - "code" is ONE working snippet for the worst resource (others follow the same
   pattern; say so in "fix"). It must work if pasted: no commented-out code, no
   placeholder comments, no "repeat this" sections.
@@ -74,6 +77,8 @@ class FixSuggestion:
     code: str
     sources_used: list[int]
     used_rag: bool
+    # Where this fix goes, from the platform table - not model output (context.placement)
+    where: str = ""
     retrieved: list[RetrievedChunk] = field(default_factory=list)
     completion: Completion | None = None
     # URLs on the site the fix mentions that the audit never saw (see verify.py)
@@ -100,6 +105,11 @@ def _sources_block(chunks: list[RetrievedChunk]) -> str:
 def _guide_block(audit_id: str) -> str:
     g = audit_guide(audit_id)
     return f"What this audit measures: {g}\n" if g else ""
+
+
+def _placement_block(platform: Platform | None, audit_id: str) -> str:
+    """The deterministic 'which file' line (see context.placement)."""
+    return f"Where to put it: {placement(platform.id if platform else None, audit_id)}\n"
 
 
 def _platform_block(p: Platform | None) -> str:
@@ -154,6 +164,7 @@ def suggest_fix(
         savings=f"{finding.savings_ms:.0f} ms" if finding.savings_ms else "unknown",
         guide_block=_guide_block(finding.audit_id),
         platform_block=_platform_block(finding.platform),
+        placement_block=_placement_block(finding.platform, finding.audit_id),
         offenders_block=_offenders_block(finding.offenders),
         sources_block=_sources_block(chunks),
     )
@@ -168,6 +179,7 @@ def suggest_fix(
         unverified_urls=unverified_urls(f"{fix}\n{code}", finding.url, finding.offenders),
         sources_used=[int(x) for x in data.get("sources_used", []) if str(x).isdigit()],
         used_rag=bool(chunks),
+        where=placement(finding.platform.id if finding.platform else None, finding.audit_id),
         retrieved=chunks,
         completion=completion,
     )

@@ -111,3 +111,41 @@ This file is your interview prep: "why did you choose X?" gets answered here.
 **Tradeoff:** fixed windows allow a burst across a boundary; sliding windows aren't worth it here. IP limits don't stop a distributed attacker; the global cap is the backstop.
 **Usage numbers:** `GET /stats` (counts only, never URLs) for scans; Vercel Web Analytics for visitors.
 
+
+## ADR 021: "Where to put it" is a lookup table, not model output
+
+**Context.** Two rounds of user feedback said the same thing from opposite directions:
+one reader asked who the tool is for, pointing out that an expert doesn't need code
+suggestions and a beginner can't apply them. The gap both descriptions circle is the
+step between "your LCP image is 412 KB" and actually changing something: *which file do
+I open?* PageSpeed Insights structurally cannot answer that, because it doesn't know
+what the site is built on. We detect that already (ADR 018) and were barely using it.
+
+**Decision.** Every fix now carries a `where` string: the file or screen this change
+goes in, for the detected platform. It is produced by `placement(platform_id, audit_id)`
+in `core/fixes/context.py`, a hand-written table keyed by platform and audit category,
+with per-platform and then global fallbacks so it is never empty.
+
+**Why not ask Gemini for it.** That re-creates exactly the bug ADR 019 exists to catch.
+The model would confidently answer `snippets/product-card.liquid` for a theme it has
+never seen, and unlike a resource URL there is nothing to check it against: we don't
+have the user's repository. A wrong entry in a table is our bug and is fixable for
+everyone at once; a wrong path invented per request is unfalsifiable. The string is also
+free, deterministic, and unit-testable.
+
+The placement line is still pasted into the prompt, so the model's prose agrees with what
+the UI shows, and the prompt now forbids naming any project file not listed there.
+
+**Honesty.** Entries are phrased as what is usually true of that platform, never as a
+claim about this specific site. Where a fix is impossible on the platform, the table says
+so: on hosted Shopify, compression and TTFB aren't the user's to change, and saying that
+is more useful than a server fix they cannot apply.
+
+**Effect on the eval.** This changes the prompt, so absolute fix quality may move. It is
+added identically to the RAG and non-RAG arms, so the comparison the eval exists to make
+is unaffected. Numbers measured before this change aren't comparable to numbers after it.
+
+**Tradeoff.** The table is only as good as its author. Shopify, WordPress and Next.js
+entries come from real use; Webflow, Squarespace, Wix, Drupal and Magento are educated
+guesses, and are flagged in CONTRIBUTING.md as the best place for someone with that
+domain knowledge to correct it.

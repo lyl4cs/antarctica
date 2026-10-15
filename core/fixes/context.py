@@ -244,6 +244,135 @@ def audit_guide(audit_id: str) -> str:
     return AUDIT_GUIDES.get(audit_id, "")
 
 
+# ----------------------------------------------------------------- placement --
+# WHERE a fix goes, not what it is.
+#
+# WHY THIS IS A TABLE AND NOT THE MODEL'S JOB
+# "Which file do I edit?" is the step people get stuck on, and it's the one thing
+# PageSpeed Insights structurally can't answer: it doesn't know what the site is
+# built on. We do (see detect_platform).
+#
+# It would be easy to ask Gemini for it. That re-creates the exact bug verify.py
+# exists to catch: the model would confidently name `snippets/product-card.liquid`
+# in a theme it has never seen. We don't have the repo, so no one can check it.
+#
+# So placement is deterministic: platform + audit category -> hand-written text,
+# true of that platform in general and phrased as "usually". The model receives it
+# as context so its prose agrees, but the string shown to the user comes from here.
+# Wrong entries are our fault and fixable; they are never invented per request.
+
+AUDIT_CATEGORY = {
+    "modern-image-formats": "image", "uses-optimized-images": "image",
+    "uses-responsive-images": "image", "offscreen-images": "image",
+    "prioritize-lcp-image": "image", "efficient-animated-content": "image",
+    "unused-css-rules": "css", "unminified-css": "css",
+    "render-blocking-resources": "css",
+    "unused-javascript": "js", "unminified-javascript": "js",
+    "legacy-javascript": "js", "duplicated-javascript": "js",
+    "uses-text-compression": "server", "uses-long-cache-ttl": "server",
+    "server-response-time": "server", "redirects": "server",
+    "font-display": "head", "uses-rel-preconnect": "head",
+}
+
+GENERIC_PLACEMENT = "The template or HTML that renders this resource."
+
+PLACEMENT: dict[str, dict[str, str]] = {
+    "shopify": {
+        "image": "Online Store > Themes > Edit code. Product images usually come from "
+                 "`sections/main-product.liquid` or a snippet it renders such as "
+                 "`snippets/product-media.liquid`; other images from the section that "
+                 "renders them.",
+        "css": "`layout/theme.liquid` for the `stylesheet_tag` lines, and your theme's "
+               "stylesheet in `assets/` (often `base.css`).",
+        "js": "`layout/theme.liquid` for script tags and `assets/*.js` for theme scripts. "
+              "Scripts you don't recognise are usually from installed apps: remove them "
+              "in Settings > Apps rather than editing the theme.",
+        "server": "Shopify runs the server, so compression, cache headers and TTFB are "
+                  "not yours to change. The lever you do have is asking the page for "
+                  "less.",
+        "_default": "Online Store > Themes > Edit code, in the section or snippet that "
+                    "renders this.",
+    },
+    "shopify-integration": {
+        "image": "Your own template, wherever the tag pointing at the Shopify CDN URL is "
+                 "written. The image itself is resized by Shopify when you add "
+                 "`?width=800` to that URL, so this is an edit to your HTML, not an "
+                 "upload.",
+        "_default": "Your own site's template. Assets served from Shopify's CDN are "
+                    "configured by their URL parameters, not by re-uploading.",
+    },
+    "wordpress": {
+        "image": "Your active theme's template (`single.php`, `page.php`, or the block "
+                 "template). An image optimisation plugin is usually the better fix, "
+                 "since it survives theme updates.",
+        "css": "`functions.php` in a CHILD theme, using `wp_enqueue_style` and "
+               "`wp_dequeue_style` to drop stylesheets this page doesn't use.",
+        "js": "`functions.php` in a CHILD theme, using `wp_dequeue_script` for scripts "
+              "this page doesn't need. Plugin-added scripts are best removed by "
+              "deactivating the plugin on pages that don't use it.",
+        "server": "Your host's config or a caching plugin: `.htaccess` on Apache, the "
+                  "server block on nginx, or your CDN's dashboard.",
+        "_default": "Your active theme, in a child theme so a theme update doesn't "
+                    "overwrite it.",
+    },
+    "nextjs": {
+        "image": "The component that renders this image. Swap `<img>` for `next/image`, "
+                 "and set `priority` on the LCP image only.",
+        "css": "The CSS module next to the component, or `app/globals.css`.",
+        "js": "The importing component: `next/dynamic` for heavy client components, and "
+              "`next/script` with `strategy=\"lazyOnload\"` for third-party tags.",
+        "server": "`next.config.js` under `headers()`, or your host's config "
+                  "(`vercel.json` on Vercel).",
+        "_default": "The component or route that renders this.",
+    },
+    "nuxt": {
+        "image": "The component that renders this image, using `<NuxtImg>` from "
+                 "@nuxt/image.",
+        "js": "The importing component (lazy components, `defineAsyncComponent`) or "
+              "`nuxt.config.ts` for third-party scripts.",
+        "server": "`nuxt.config.ts` under `nitro.routeRules`, or your host's config.",
+        "_default": "The component or `nuxt.config.ts`.",
+    },
+    "wix": {
+        "_default": "Wix doesn't give you file-level access. This is changed in the "
+                    "editor's element settings if at all; some of it can't be changed "
+                    "on the platform.",
+    },
+    "squarespace": {
+        "css": "Website > Website Tools > Custom CSS.",
+        "js": "Settings > Advanced > Code Injection.",
+        "_default": "The editor's settings for this element. Squarespace serves images "
+                    "resized from what you uploaded, so re-uploading a smaller original "
+                    "is often the fix.",
+    },
+    "webflow": {
+        "image": "Select the image in the Designer and use the settings panel for "
+                 "responsive sizes and lazy loading.",
+        "js": "Project Settings > Custom Code, or the page's own custom code panel.",
+        "_default": "The Webflow Designer, in this element's settings panel.",
+    },
+    "custom": {
+        "image": "The HTML or template that writes this `<img>` tag.",
+        "css": "The HTML `<head>` where this stylesheet is linked.",
+        "js": "The HTML where this script tag is written, or your bundler config.",
+        "server": "Your web server or CDN config: `gzip`/`brotli` in nginx, "
+                  "`mod_deflate` in Apache, or your CDN dashboard.",
+        "_default": GENERIC_PLACEMENT,
+    },
+}
+
+
+def placement(platform_id: str | None, audit_id: str) -> str:
+    """Where a fix for this audit usually lives on this platform.
+
+    Falls back platform-first: the platform's entry for this audit category, then
+    that platform's `_default`, then the generic line. Always returns something.
+    """
+    table = PLACEMENT.get(platform_id or "", PLACEMENT["custom"])
+    category = AUDIT_CATEGORY.get(audit_id, "")
+    return table.get(category) or table.get("_default") or GENERIC_PLACEMENT
+
+
 # ------------------------------------------------------------- slim extract --
 
 def slim_lhr(lhr: dict, audit_ids: list[str]) -> dict:

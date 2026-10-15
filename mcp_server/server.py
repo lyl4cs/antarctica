@@ -137,6 +137,7 @@ class AntarcticaTools:
                 "audit_id": f["audit_id"],
                 "title": f["title"],
                 "diagnosis": f["diagnosis"],
+                "where": f.get("where", ""),
                 "fix": f["fix"],
                 "code": f["code"],
                 "sources": list(dict.fromkeys(f["sources"])),  # dedupe, keep order

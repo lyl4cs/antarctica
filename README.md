@@ -115,8 +115,23 @@ jobs:
 | `infra/` · `db/migrations/` | gcloud scripts, numbered SQL |
 | `docs/` | [DECISIONS.md](docs/DECISIONS.md) (why), [SETUP.md](docs/SETUP.md) (how), [TASKS.md](docs/TASKS.md) (next) |
 
-## Found something wrong?
+## Contributing
 
-Especially interested in fixes that are confidently wrong, or a path the checker should have flagged and didn't. [Open an issue](https://github.com/lyl4cs/sn0wy/issues) with the URL you scanned and what you got.
+The most useful thing you can send costs you no code at all: **a fix that was confidently wrong.** [Open an issue](https://github.com/lyl4cs/sn0wy/issues/new?labels=bad-fix) with the URL you scanned and what it told you. A path the checker should have flagged and didn't is the best possible bug report.
+
+If you want to write code, the setup is three commands and the tests run offline with no cloud account:
+
+```bash
+pip install -e ".[dev,ai]"
+python -m pytest -q
+ruff check .
+```
+
+Issues tagged [good first issue](https://github.com/lyl4cs/sn0wy/labels/good%20first%20issue) are scoped small on purpose and name the file to change. Two areas where domain knowledge beats my own:
+
+- **[`PLACEMENT` in `core/fixes/context.py`](core/fixes/context.py)** says which file a fix goes in for each platform. If you know Webflow or Squarespace or Drupal better than I do, that table is wrong in ways I can't see. It's plain text with a unit test, and you don't need to understand the rest of the codebase to fix an entry.
+- **[`AUDIT_GUIDES`](core/fixes/context.py)** is one line per Lighthouse audit explaining what it actually measures. Missing audits make fixes vaguer.
+
+Full guide, including how the pieces fit together: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Built by [Layth Sarama](https://github.com/lyl4cs). Formerly called antarctica.
