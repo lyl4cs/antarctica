@@ -174,6 +174,38 @@ describe("fix panel polish", () => {
     expect(screen.getByText("https://northwind.shop/images/model-lifestyle.webp")).toBeInTheDocument();
   });
 
+  it("shows where the fix goes, with inline code rendered", async () => {
+    mockFetch((u) => {
+      if (u.pathname.endsWith("/report")) return { body: report };
+      if (u.pathname.endsWith("/fixes"))
+        return {
+          body: [
+            {
+              ...fix(0),
+              where: "`functions.php` in a CHILD theme, using `wp_dequeue_script`.",
+            },
+          ],
+        };
+      return undefined;
+    });
+    renderReport();
+    fireEvent.click((await screen.findAllByRole("button", { name: /Get AI fix/ }))[0]);
+    expect(await screen.findByText("Where to put it")).toBeInTheDocument();
+    expect(screen.getByText("functions.php").tagName).toBe("CODE");
+  });
+
+  it("hides the where block when the server sends nothing", async () => {
+    mockFetch((u) => {
+      if (u.pathname.endsWith("/report")) return { body: report };
+      if (u.pathname.endsWith("/fixes")) return { body: [{ ...fix(0), where: "" }] };
+      return undefined;
+    });
+    renderReport();
+    fireEvent.click((await screen.findAllByRole("button", { name: /Get AI fix/ }))[0]);
+    expect(await screen.findByText("diag 0")).toBeInTheDocument();
+    expect(screen.queryByText("Where to put it")).not.toBeInTheDocument();
+  });
+
   it("shows no warning when every path checks out", async () => {
     mockFetch((u) => {
       if (u.pathname.endsWith("/report")) return { body: report };
