@@ -226,6 +226,23 @@ function UnverifiedNote({ urls }: { urls: string[] }) {
   );
 }
 
+/**
+ * "Where to put it": the step between knowing the problem and changing something.
+ * Comes from a platform table on the server, not from the model (see ADR 021), so
+ * it names the kind of file this lives in, never a path inside the user's repo.
+ */
+function WhereNote({ where }: { where?: string }) {
+  if (!where?.trim()) return null;
+  return (
+    <div className="fix-where" role="note">
+      <span className="fix-label">Where to put it</span>
+      <p>
+        <Inline text={where} />
+      </p>
+    </div>
+  );
+}
+
 function FixPanel({ fix, id }: { fix: FixOut; id: string }) {
   return (
     <div className="fix-panel" id={id}>
@@ -243,6 +260,7 @@ function FixPanel({ fix, id }: { fix: FixOut; id: string }) {
           </p>
         </div>
       </div>
+      <WhereNote where={fix.where} />
       {fix.code.trim() && <CodeBlock code={fix.code} />}
       <UnverifiedNote urls={fix.unverified_urls ?? []} />
       <div className="fix-foot">

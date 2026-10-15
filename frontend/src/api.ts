@@ -86,6 +86,8 @@ export interface FixOut {
   diagnosis: string;
   fix: string;
   code: string;
+  /** Which file/screen this change goes in, for the detected platform. May be "". */
+  where?: string;
   sources: string[];
   latency_ms: number;
   cost_usd: number;

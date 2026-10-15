@@ -1432,6 +1432,20 @@ button:disabled {
   font-size: 13px;
   overflow-wrap: anywhere;
 }
+.fix-where {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--white);
+  border: 1px solid var(--ice-panel-line);
+}
+.fix-where p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
 .fix-note {
   font-size: 13px;
   color: var(--muted);
