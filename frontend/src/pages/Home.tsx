@@ -231,7 +231,7 @@ export function Home() {
           <div className="home-copy" style={{ gap: 20 }}>
             <h1>See the whole iceberg.</h1>
             <p className="home-lede">
-              Sn0wy measures how fast your page really loads, then writes a fix for every problem it
+              sn0wy measures how fast your page really loads, then writes a fix for every problem it
               finds, with the code and the docs to back it up.
             </p>
           </div>
