@@ -13,7 +13,7 @@ export function Layout() {
     <div className="shell">
       <div className="container">
         <header className="site-header">
-          <Link to="/" className="brand" aria-label="Antarctica home">
+          <Link to="/" className="brand" aria-label="Sn0wy home">
             <LogoMark />
             <span className="brand-name" aria-hidden="true">
               antarctica

@@ -70,3 +70,5 @@ See [docs/SETUP.md](docs/SETUP.md). Design decisions and tradeoffs: [docs/DECISI
 
 ## Layout
 `services/` (API, scanner worker, shared store/queue) · `core/` (LLM clients, RAG, fix suggester, evals) · `frontend/` (React app, Vercel) · `mcp_server/` (MCP tools) · `infra/` (gcloud scripts) · `db/migrations/` · `scripts/` (doc fetch/ingest) · `docs/design/` (approved UI designs)
+
+Formerly known as Antarctica.
