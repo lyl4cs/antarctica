@@ -47,12 +47,30 @@ class StoredFinding(BaseModel):
     offenders: list[OffenderOut] = []
 
 
+class ConditionsOut(BaseModel):
+    """What the score was measured under. See services/scanner/parse.py:Conditions.
+
+    Shown next to the score, and used to refuse a before/after comparison between
+    two scans that weren't measured the same way. Every field is optional: scans
+    recorded before this existed report unknown rather than disappearing.
+    """
+
+    lighthouse_version: str | None = None
+    form_factor: str | None = None
+    throttling_method: str | None = None
+    cpu_slowdown: float | None = None
+    rtt_ms: float | None = None
+    throughput_kbps: float | None = None
+    benchmark_index: float | None = None
+
+
 class Report(BaseModel):
     scan: Scan
     performance_score: int | None
     metrics: dict[str, float | None]
     findings: list[StoredFinding]
     platform: PlatformOut | None = None
+    conditions: ConditionsOut = ConditionsOut()
 
 
 class ScanSummary(BaseModel):

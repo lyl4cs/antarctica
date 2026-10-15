@@ -64,6 +64,17 @@ export interface StoredFinding {
 /** Keys of Report.metrics (services/scanner/parse.py: Metrics minus performance_score). */
 export type MetricKey = "fcp_ms" | "lcp_ms" | "tbt_ms" | "cls" | "speed_index_ms";
 
+/** services/common/models.py: ConditionsOut. What the score was measured under. */
+export interface Conditions {
+  lighthouse_version?: string | null;
+  form_factor?: string | null;
+  throttling_method?: string | null;
+  cpu_slowdown?: number | null;
+  rtt_ms?: number | null;
+  throughput_kbps?: number | null;
+  benchmark_index?: number | null;
+}
+
 /** services/common/models.py: Report */
 export interface Report {
   scan: Scan;
@@ -71,6 +82,8 @@ export interface Report {
   metrics: Partial<Record<MetricKey, number | null>>;
   findings: StoredFinding[];
   platform?: Platform | null;
+  /** How this score was measured. Absent on scans recorded before it was captured. */
+  conditions?: Conditions;
 }
 
 /** services/common/models.py: ScanSummary */

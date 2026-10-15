@@ -128,15 +128,44 @@ export interface MetricDef {
   good: number;
   poor: number;
   unitless?: boolean;
+  /** Plain-English explanation behind the "?" on reports and the history diff.
+   *  Written for someone who has never heard of Core Web Vitals: what the number
+   *  describes from the visitor's point of view, then what counts as good. */
+  help: string;
 }
 
 /** Display order matches the design: LCP, TBT, CLS, FCP, SI. */
 export const METRICS: MetricDef[] = [
-  { field: "lcp_ms", key: "LCP", name: "Largest Contentful Paint", good: 2500, poor: 4000 },
-  { field: "tbt_ms", key: "TBT", name: "Total Blocking Time", good: 200, poor: 600 },
-  { field: "cls", key: "CLS", name: "Cumulative Layout Shift", good: 0.1, poor: 0.25, unitless: true },
-  { field: "fcp_ms", key: "FCP", name: "First Contentful Paint", good: 1800, poor: 3000 },
-  { field: "speed_index_ms", key: "SI", name: "Speed Index", good: 3400, poor: 5800 },
+  {
+    field: "lcp_ms", key: "LCP", name: "Largest Contentful Paint", good: 2500, poor: 4000,
+    help: "How long until the biggest thing on screen finishes loading, usually your hero " +
+      "image or headline. It's the closest single number to \u201cwhen did the page feel " +
+      "ready\u201d. Under 2.5s is good, over 4s is poor.",
+  },
+  {
+    field: "tbt_ms", key: "TBT", name: "Total Blocking Time", good: 200, poor: 600,
+    help: "How long the page was frozen and ignoring taps while JavaScript ran. High TBT is " +
+      "why a page looks finished but nothing happens when you tap it. Under 200ms is good, " +
+      "over 600ms is poor.",
+  },
+  {
+    field: "cls", key: "CLS", name: "Cumulative Layout Shift", good: 0.1, poor: 0.25,
+    unitless: true,
+    help: "How much the page jumps around while it loads, the thing that makes you tap the " +
+      "wrong button. It's a score, not a time. Under 0.1 is good, over 0.25 is poor.",
+  },
+  {
+    field: "fcp_ms", key: "FCP", name: "First Contentful Paint", good: 1800, poor: 3000,
+    help: "How long until anything at all appears instead of a blank screen. It doesn't mean " +
+      "the page is usable yet, just that something showed up. Under 1.8s is good, over 3s " +
+      "is poor.",
+  },
+  {
+    field: "speed_index_ms", key: "SI", name: "Speed Index", good: 3400, poor: 5800,
+    help: "How quickly the page fills in visually, rather than one single moment. A page that " +
+      "paints in stages scores worse than one that arrives at once. Under 3.4s is good, " +
+      "over 5.8s is poor.",
+  },
 ];
 
 export function formatMetric(def: MetricDef, value: number | null | undefined): string {

@@ -2,27 +2,79 @@
   "lighthouseVersion": "12.2.1",
   "requestedUrl": "https://example.com/",
   "finalDisplayedUrl": "https://example.com/",
-  "categories": {"performance": {"score": 0.47}},
+  "categories": {
+    "performance": {
+      "score": 0.47
+    }
+  },
   "audits": {
-    "first-contentful-paint": {"numericValue": 2810.5},
-    "largest-contentful-paint": {"numericValue": 5320.2},
-    "total-blocking-time": {"numericValue": 640.0},
-    "cumulative-layout-shift": {"numericValue": 0.21},
-    "speed-index": {"numericValue": 4100.0},
+    "first-contentful-paint": {
+      "numericValue": 2810.5
+    },
+    "largest-contentful-paint": {
+      "numericValue": 5320.2
+    },
+    "total-blocking-time": {
+      "numericValue": 640.0
+    },
+    "cumulative-layout-shift": {
+      "numericValue": 0.21
+    },
+    "speed-index": {
+      "numericValue": 4100.0
+    },
     "render-blocking-resources": {
-      "title": "Eliminate render-blocking resources", "description": "Resources are blocking the first paint.",
-      "score": 0.2, "details": {"type": "opportunity", "overallSavingsMs": 1250, "overallSavingsBytes": 0}
+      "title": "Eliminate render-blocking resources",
+      "description": "Resources are blocking the first paint.",
+      "score": 0.2,
+      "details": {
+        "type": "opportunity",
+        "overallSavingsMs": 1250,
+        "overallSavingsBytes": 0
+      }
     },
     "unused-javascript": {
-      "title": "Reduce unused JavaScript", "description": "Reduce unused JS.",
-      "score": 0.35, "details": {"type": "opportunity", "overallSavingsMs": 2300, "overallSavingsBytes": 412000}
+      "title": "Reduce unused JavaScript",
+      "description": "Reduce unused JS.",
+      "score": 0.35,
+      "details": {
+        "type": "opportunity",
+        "overallSavingsMs": 2300,
+        "overallSavingsBytes": 412000
+      }
     },
     "uses-text-compression": {
-      "title": "Enable text compression", "description": "Serve gzip/brotli.",
-      "score": 1, "details": {"type": "opportunity", "overallSavingsMs": 0, "overallSavingsBytes": 0}
+      "title": "Enable text compression",
+      "description": "Serve gzip/brotli.",
+      "score": 1,
+      "details": {
+        "type": "opportunity",
+        "overallSavingsMs": 0,
+        "overallSavingsBytes": 0
+      }
     },
     "server-response-time": {
-      "title": "Reduce initial server response time", "score": 0.5, "details": {"type": "table"}
+      "title": "Reduce initial server response time",
+      "score": 0.5,
+      "details": {
+        "type": "table"
+      }
     }
+  },
+  "configSettings": {
+    "formFactor": "mobile",
+    "throttlingMethod": "simulate",
+    "throttling": {
+      "rttMs": 150,
+      "throughputKbps": 1638.4,
+      "cpuSlowdownMultiplier": 4,
+      "requestLatencyMs": 562.5,
+      "downloadThroughputKbps": 1474.5600000000002,
+      "uploadThroughputKbps": 675
+    }
+  },
+  "environment": {
+    "benchmarkIndex": 1250.5,
+    "hostUserAgent": "Mozilla/5.0 (X11; Linux x86_64) HeadlessChrome/131.0.0.0"
   }
 }
