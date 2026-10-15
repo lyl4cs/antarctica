@@ -24,6 +24,7 @@ import json
 from dataclasses import dataclass, field
 
 from core.fixes.context import Offender, Platform, audit_guide
+from core.fixes.verify import unverified_urls
 from core.llm import LLM, Completion
 from core.rag.retrieve import RetrievedChunk, Retriever
 
@@ -37,13 +38,19 @@ Estimated savings: {savings}
 {guide_block}{platform_block}{offenders_block}
 {sources_block}
 Give ONE concrete fix a developer could apply today, for THIS audit only.
-Rules: use the real resource URLs listed above in your code; never invent
-filenames or paths; fit the fix to the detected platform; if the platform is
-unknown, give a plain HTML/server fix.
+Rules:
+- Copy resource URLs exactly as listed above, character for character. Never
+  invent or change a folder or filename. A new file you propose (e.g. a .webp
+  version) goes in the SAME folder as the original.
+- Fit the fix to the detected platform; if the platform is unknown, give a plain
+  HTML/server fix.
+- "code" is ONE working snippet for the worst resource (others follow the same
+  pattern; say so in "fix"). It must work if pasted: no commented-out code, no
+  placeholder comments, no "repeat this" sections.
 Respond as JSON with keys:
 "diagnosis" (1-2 sentences on the root cause, naming the worst resources),
 "fix" (the specific change to make),
-"code" (a short snippet: HTML/CSS/JS/Liquid/config showing the change, or "" if none),
+"code" (the snippet, or "" if the fix is a setting, not code),
 "sources_used" (list of source numbers you relied on, [] if none).
 """
 
@@ -69,6 +76,8 @@ class FixSuggestion:
     used_rag: bool
     retrieved: list[RetrievedChunk] = field(default_factory=list)
     completion: Completion | None = None
+    # URLs on the site the fix mentions that the audit never saw (see verify.py)
+    unverified_urls: list[str] = field(default_factory=list)
 
     def cited_sources(self) -> list[str]:
         """Source URLs the model actually cited, deduped in order. Several chunks can
@@ -150,11 +159,13 @@ def suggest_fix(
     )
     completion = llm.complete(prompt, json_mode=True)
     data = _parse(completion.text)
+    fix, code = str(data.get("fix", "")), str(data.get("code", ""))
     return FixSuggestion(
         audit_id=finding.audit_id,
         diagnosis=str(data.get("diagnosis", "")),
-        fix=str(data.get("fix", "")),
-        code=str(data.get("code", "")),
+        fix=fix,
+        code=code,
+        unverified_urls=unverified_urls(f"{fix}\n{code}", finding.url, finding.offenders),
         sources_used=[int(x) for x in data.get("sources_used", []) if str(x).isdigit()],
         used_rag=bool(chunks),
         retrieved=chunks,

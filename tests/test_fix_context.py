@@ -139,7 +139,7 @@ def test_prompt_carries_evidence(lhr_ev):
     assert f"- {SITE}/js/vendor.js (wastes 293 KB, of 391 KB)" in p
     assert "Platform: Custom site + Shopify assets" in p
     assert "What this audit measures: JS downloaded but not executed" in p
-    assert "never invent" in p
+    assert "invent or change a folder" in p
 
 
 def test_prompt_without_evidence_has_no_empty_sections():
@@ -249,3 +249,11 @@ def test_build_cases_copies_evidence(tmp_path):
     build_cases(Api(), ["s1"], out)
     row = json.loads(out.read_text())
     assert row["offenders"] == [{"url": "x"}] and row["platform"]["id"] == "custom"
+
+
+def test_fixes_endpoint_returns_unverified_urls(api):
+    client, scan_id = api
+    reply = _reply(code=f'<script src="{SITE}/static/vendor.js" defer></script>')
+    main.app.dependency_overrides[main.get_ai] = lambda: (ScriptedLLM([reply]), None)
+    [fix] = client.get(f"/scans/{scan_id}/fixes?limit=1&rag=false").json()
+    assert fix["unverified_urls"] == [f"{SITE}/static/vendor.js"]

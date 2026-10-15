@@ -93,3 +93,8 @@ This file is your interview prep: "why did you choose X?" gets answered here.
 **Eval impact (rule 6):** the eval methodology is unchanged (same judge, same with/without-RAG comparison, same metrics). The system under test changed: v2 prompts. Evidence is identical in both arms, so the delta still isolates RAG. Cases now carry `offenders`/`platform` (built by `scripts/build_cases.py`) so eval prompts match production. Build the eval set AFTER deploying v2.
 **Sources:** fix responses list the sources the model actually cited, deduped, instead of every retrieved chunk.
 
+## 019: Verify AI fixes against the audit; one working snippet
+**Decision:** Every fix is checked against the evidence: any URL on the site's own hosts whose folder Lighthouse never saw is returned as `unverified_urls` and shown as a warning. The prompt now demands URLs copied exactly, new files in the same folder as the original, and ONE pasteable snippet (no commented-out code). Diagnosis/fix text renders inline code.
+**Why:** On the live Novus report the model wrote `/images/model-lifestyle.jpg` and wrapped half its code in an HTML comment. Instructions reduce that; only a check catches it. Same-folder new names (`hero.webp` next to `hero.jpg`) are allowed on purpose, because that is what a format fix proposes.
+**Eval:** `unverified_urls` is a free, objective quality signal (rate of fixes with invented paths) to report next to the judge's accepted-fix rate. The judge and its methodology are unchanged.
+

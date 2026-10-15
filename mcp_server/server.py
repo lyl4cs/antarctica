@@ -140,6 +140,8 @@ class AntarcticaTools:
                 "fix": f["fix"],
                 "code": f["code"],
                 "sources": list(dict.fromkeys(f["sources"])),  # dedupe, keep order
+                # paths the audit never saw: tell the user to check them
+                "unverified_urls": f.get("unverified_urls", []),
             }
             for f in fixes
         ]

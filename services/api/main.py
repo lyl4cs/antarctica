@@ -156,6 +156,8 @@ class FixOut(BaseModel):
     sources: list[str]
     latency_ms: float
     cost_usd: float
+    # site URLs in the fix whose folder the audit never saw: shown as a warning
+    unverified_urls: list[str] = []
 
 
 @app.get("/scans/{scan_id}/fixes")
@@ -186,7 +188,7 @@ def get_fixes(
         )
         out.append(FixOut(
             audit_id=f.audit_id, title=f.title, diagnosis=s.diagnosis, fix=s.fix, code=s.code,
-            sources=s.cited_sources(),
+            sources=s.cited_sources(), unverified_urls=s.unverified_urls,
             latency_ms=s.completion.latency_ms, cost_usd=s.completion.cost_usd,
         ))
     return out

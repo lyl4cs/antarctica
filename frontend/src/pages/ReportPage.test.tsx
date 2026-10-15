@@ -149,3 +149,40 @@ describe("v2 evidence on the report", () => {
     expect(screen.getAllByText("Worst files")).toHaveLength(1); // finding 1 has no offenders
   });
 });
+
+describe("fix panel polish", () => {
+  it("renders inline code in diagnosis and warns about unverified paths", async () => {
+    mockFetch((u) => {
+      if (u.pathname.endsWith("/report")) return { body: report };
+      if (u.pathname.endsWith("/fixes"))
+        return {
+          body: [
+            {
+              ...fix(0),
+              diagnosis: "Worst is `model-lifestyle.jpg` at 135 KB.",
+              unverified_urls: ["https://northwind.shop/images/model-lifestyle.webp"],
+            },
+          ],
+        };
+      return undefined;
+    });
+    renderReport();
+    fireEvent.click((await screen.findAllByRole("button", { name: /Get AI fix/ }))[0]);
+    const codeEl = await screen.findByText("model-lifestyle.jpg");
+    expect(codeEl.tagName).toBe("CODE"); // no literal backticks
+    expect(screen.getByText(/Check these paths before using the code/)).toBeInTheDocument();
+    expect(screen.getByText("https://northwind.shop/images/model-lifestyle.webp")).toBeInTheDocument();
+  });
+
+  it("shows no warning when every path checks out", async () => {
+    mockFetch((u) => {
+      if (u.pathname.endsWith("/report")) return { body: report };
+      if (u.pathname.endsWith("/fixes")) return { body: [{ ...fix(0), unverified_urls: [] }] };
+      return undefined;
+    });
+    renderReport();
+    fireEvent.click((await screen.findAllByRole("button", { name: /Get AI fix/ }))[0]);
+    expect(await screen.findByText("diag 0")).toBeInTheDocument();
+    expect(screen.queryByText(/Check these paths/)).not.toBeInTheDocument();
+  });
+});

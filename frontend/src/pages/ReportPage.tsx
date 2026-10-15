@@ -203,20 +203,48 @@ function CodeBlock({ code }: { code: string }) {
   );
 }
 
+/**
+ * The backend checks every site URL in a fix against the files Lighthouse
+ * actually saw (core/fixes/verify.py). Paths in folders the audit never touched
+ * may be invented by the model, so we say so instead of letting someone paste a
+ * broken URL into production.
+ */
+function UnverifiedNote({ urls }: { urls: string[] }) {
+  if (urls.length === 0) return null;
+  return (
+    <div className="fix-warning" role="note">
+      <strong>Check these paths before using the code.</strong> They aren't in any folder the audit
+      found files in, so they may not exist on your site:
+      <ul>
+        {urls.map((u) => (
+          <li key={u}>
+            <code>{u}</code>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function FixPanel({ fix, id }: { fix: FixOut; id: string }) {
   return (
     <div className="fix-panel" id={id}>
       <div className="fix-cols">
         <div>
           <span className="fix-label">Diagnosis</span>
-          <p>{fix.diagnosis}</p>
+          <p>
+            <Inline text={fix.diagnosis} />
+          </p>
         </div>
         <div>
           <span className="fix-label">Fix</span>
-          <p>{fix.fix}</p>
+          <p>
+            <Inline text={fix.fix} />
+          </p>
         </div>
       </div>
       {fix.code.trim() && <CodeBlock code={fix.code} />}
+      <UnverifiedNote urls={fix.unverified_urls ?? []} />
       <div className="fix-foot">
         <ul className="sources" aria-label="Sources">
           <li className="sources-label" aria-hidden="true">
