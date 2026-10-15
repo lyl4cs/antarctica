@@ -111,3 +111,24 @@ def test_pgvector_retrieval_ranks_relevant_chunk_first(clean_db):
     assert "Lazy load images" in top[0].text
     assert top[0].source == "web.dev/test"
     assert top[0].score > top[1].score  # cosine similarity, higher = closer
+
+
+def test_get_evidence_matches_python_slim_extract(clean_db, scan_result):
+    """The SQL in PostgresStore.get_evidence must return exactly what slim_lhr does,
+    so platform detection and offenders behave the same in prod and in tests."""
+    import copy
+
+    from core.fixes.context import slim_lhr
+
+    raw = copy.deepcopy(scan_result.raw)
+    raw["stackPacks"] = [{"id": "wordpress", "title": "WordPress"}]
+    raw["audits"]["unused-javascript"]["details"]["items"] = [
+        {"url": "https://a.com/v.js", "wastedBytes": 1000, "totalBytes": 2000}]
+    raw["audits"]["network-requests"] = {"details": {"items": [{"url": "https://a.com/"}]}}
+    store = PostgresStore(clean_db)
+    scan = store.create_scan("https://a.com")
+    store.save_result(scan.id, scan_result.report, raw, 1.0)
+
+    ids = ["unused-javascript", "render-blocking-resources"]
+    assert store.get_evidence(scan.id, ids) == slim_lhr(raw, ids)
+    assert store.get_evidence(str(uuid.uuid4()), ids) is None

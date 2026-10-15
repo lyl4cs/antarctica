@@ -18,6 +18,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Protocol
 
+from core.fixes.context import slim_lhr
 from services.common.models import Report, Scan, ScanSummary, StoredFinding
 from services.scanner.parse import ParsedReport
 
@@ -35,6 +36,7 @@ class Store(Protocol):
     ) -> bool: ...
     def mark_failed(self, scan_id: str, error: str) -> None: ...
     def get_report(self, scan_id: str) -> Report | None: ...
+    def get_evidence(self, scan_id: str, audit_ids: list[str]) -> dict | None: ...
     def list_scans(self, url: str, limit: int = 20) -> list[ScanSummary]: ...
 
 
@@ -42,6 +44,7 @@ class InMemoryStore:
     def __init__(self) -> None:
         self.scans: dict[str, Scan] = {}
         self.reports: dict[str, ParsedReport] = {}
+        self.raw: dict[str, dict] = {}
 
     def create_scan(self, url: str) -> Scan:
         scan = Scan(id=str(uuid.uuid4()), url=url, status="queued", created_at=_now())
@@ -63,6 +66,7 @@ class InMemoryStore:
         if scan.status == "done":
             return False  # duplicate delivery, nothing to do
         self.reports[scan_id] = report
+        self.raw[scan_id] = raw
         scan.status, scan.duration_ms, scan.finished_at = "done", duration_ms, _now()
         return True
 
@@ -94,6 +98,10 @@ class InMemoryStore:
             )
             for sc in scans
         ]
+
+    def get_evidence(self, scan_id: str, audit_ids: list[str]) -> dict | None:
+        raw = self.raw.get(scan_id)
+        return None if raw is None else slim_lhr(raw, audit_ids)
 
     def list_scans(self, url: str, limit: int = 20) -> list[ScanSummary]:
         scans = sorted(
@@ -221,6 +229,26 @@ class PostgresStore:  # pragma: no cover - exercised against a real DB
                 (*params, limit),
             ).fetchall()
         return [ScanSummary(scan=self._row_to_scan(r[:-1]), performance_score=r[-1]) for r in rows]
+
+    def get_evidence(self, scan_id: str, audit_ids: list[str]) -> dict | None:
+        """The slices of the raw Lighthouse JSON the fix prompt needs, extracted in
+        SQL: stack packs, network request URLs, and `details.items` of the given
+        audits. Same shape as core.fixes.context.slim_lhr, without shipping the
+        whole report (often 500 KB+) from Neon to the API on every request."""
+        with self._conn() as c:
+            row = c.execute(
+                """SELECT jsonb_build_object(
+                       'stackPacks', COALESCE(raw->'stackPacks', '[]'::jsonb),
+                       'audits', COALESCE((
+                           SELECT jsonb_object_agg(k, jsonb_build_object(
+                                      'details', jsonb_build_object(
+                                          'items', v->'details'->'items')))
+                           FROM jsonb_each(raw->'audits') AS e(k, v)
+                           WHERE k = ANY(%s)), '{}'::jsonb))
+                   FROM audits WHERE scan_id = %s""",
+                ([*audit_ids, "network-requests"], scan_id),
+            ).fetchone()
+        return row[0] if row else None
 
     def list_scans(self, url: str, limit: int = 20) -> list[ScanSummary]:
         return self._summaries("WHERE s.url = %s", (url,), limit)

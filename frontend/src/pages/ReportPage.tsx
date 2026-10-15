@@ -24,7 +24,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { api, ApiError, type FixOut, type Report, type StoredFinding } from "../api";
+import { api, ApiError, type FixOut, type Offender, type Report, type StoredFinding } from "../api";
 import {
   ChevronIcon,
   CopyIcon,
@@ -247,6 +247,43 @@ function FixPanel({ fix, id }: { fix: FixOut; id: string }) {
   );
 }
 
+/**
+ * The exact files behind a finding (from Lighthouse's audit details), so the
+ * report says WHAT to change, not just which category. Shows the worst 3; the
+ * AI fix prompt gets the same list (up to 5).
+ */
+function OffenderList({ offenders }: { offenders: Offender[] }) {
+  if (offenders.length === 0) return null;
+  return (
+    <div className="offenders">
+      <span className="offenders-label">Worst files</span>
+      <ul>
+        {offenders.slice(0, 3).map((o) => (
+          <li key={o.url}>
+            <a href={o.url} target="_blank" rel="noreferrer" title={o.url}>
+              {shortResource(o.url)}
+            </a>
+            {o.wasted_kb !== null && o.wasted_kb > 0 && <span className="offender-waste">−{Math.round(o.wasted_kb)} KB</span>}
+            {o.wasted_ms !== null && o.wasted_ms > 0 && <span className="offender-waste">−{o.wasted_ms} ms</span>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** "https://cdn.x.com/a/b/hero-1920.jpg?v=3" -> "cdn.x.com/…/hero-1920.jpg" */
+export function shortResource(url: string): string {
+  try {
+    const u = new URL(url);
+    const parts = u.pathname.split("/").filter(Boolean);
+    const file = parts.pop() ?? "";
+    return parts.length ? `${u.host}/…/${file}` : `${u.host}/${file}`;
+  } catch {
+    return url;
+  }
+}
+
 function FindingCard({
   finding,
   index,
@@ -294,6 +331,7 @@ function FindingCard({
               )}
               {score !== null && <span className={`tag tone-${band(score).tone}`}>score {score}</span>}
             </div>
+            <OffenderList offenders={finding.offenders ?? []} />
           </div>
         </div>
 
@@ -424,6 +462,11 @@ export function ReportPage() {
             {scan.duration_ms !== null && (
               <span>
                 Took <strong>{formatDuration(scan.duration_ms)}</strong>
+              </span>
+            )}
+            {report.platform && (
+              <span title={report.platform.evidence.join("\n")}>
+                Platform <strong>{report.platform.name}</strong>
               </span>
             )}
             {scan.attempts > 0 && (
