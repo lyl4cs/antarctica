@@ -72,10 +72,16 @@ def summarize_report(report: dict, max_findings: int = MAX_FINDINGS) -> dict:
                 "est_savings_s": _sec(f.get("savings_ms")),
                 "est_savings_kb": (None if f.get("savings_bytes") is None
                                    else round(f["savings_bytes"] / 1024)),
+                # the files to change, worst first (v2 evidence; 3 keeps context small)
+                "worst_resources": [
+                    {k: o[k] for k in ("url", "wasted_kb", "wasted_ms") if o.get(k) is not None}
+                    for o in (f.get("offenders") or [])[:3]
+                ],
             }
             for f in report["findings"][:max_findings]
         ],
         "total_findings": len(report["findings"]),
+        "platform": (report.get("platform") or {}).get("name"),
     }
 
 

@@ -85,3 +85,11 @@ This file is your interview prep: "why did you choose X?" gets answered here.
 **Single agent, not multi-agent:** One LlmAgent with a ReAct loop and a self-check step in the instruction. ADR 011 still holds: add sub-agents only if traces show one agent failing at a step a specialist would fix.
 **Tracing:** ADK before/after callbacks record every model and tool call with latency (perf_counter, ms) and token counts, so cost and slowness are attributable to a step.
 
+## 018: Fix prompts carry audit evidence (v2)
+**Decision:** Every fix prompt now includes (1) the exact offending resources from Lighthouse's audit details with their waste, (2) the platform detected from evidence (Lighthouse stack packs + URL fingerprints in network requests), and (3) a one-line guide to what the audit measures.
+**Why:** v1 fixes were generic (`flower.jpg`), assumed a stack, repeated the same answer for different image audits, and listed one source four times. The evidence was already in the stored raw JSON; we just weren't using it.
+**Detection, not assumption:** a site that loads `cdn.shopify.com` assets is labelled "Custom site + Shopify assets", not a Shopify store, because the right fix differs (resize via CDN URL params vs Liquid `image_url`). Unknown stacks get plain HTML/server fixes.
+**Computed on read:** evidence is derived from `audits.raw` when a report is requested, so existing scans benefit without re-scanning. Postgres extracts only the needed JSON slices in SQL (`get_evidence`) instead of shipping the whole report (~500 KB) to the API; an integration test pins it to the Python `slim_lhr` output.
+**Eval impact (rule 6):** the eval methodology is unchanged (same judge, same with/without-RAG comparison, same metrics). The system under test changed: v2 prompts. Evidence is identical in both arms, so the delta still isolates RAG. Cases now carry `offenders`/`platform` (built by `scripts/build_cases.py`) so eval prompts match production. Build the eval set AFTER deploying v2.
+**Sources:** fix responses list the sources the model actually cited, deduped, instead of every retrieved chunk.
+

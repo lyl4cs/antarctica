@@ -51,3 +51,6 @@
 ### A9: ADK agent ✅ DONE
 > `agent/`: Google ADK agent (Gemini) using the MCP server as its toolset in a ReAct loop (audit -> pick findings -> get fixes -> self-check -> plan), with per-step tracing (latency, tokens). Run: see agent/README.md.
 
+### A11: Fix quality v2 ✅ DONE
+> Offending resources, platform detection (stack packs + URL fingerprints), per-audit guides, cited+deduped sources. Report shows "Worst files" and the platform; MCP summaries include them. See ADR 018.
+
