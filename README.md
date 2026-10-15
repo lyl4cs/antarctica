@@ -1,6 +1,6 @@
-# Antarctica
+# Sn0wy
 
-**A website speed auditor with AI fix suggestions, on Google Cloud.** Submit a URL. Antarctica runs Lighthouse on a queue of Cloud Run workers, stores the results in Postgres, and uses Gemini with retrieval over web-performance docs (RAG on pgvector) to suggest concrete code fixes for each problem. An eval harness measures whether RAG actually improves those fixes.
+**A website speed auditor with AI fix suggestions, on Google Cloud.** Submit a URL. Sn0wy runs Lighthouse on a queue of Cloud Run workers, stores the results in Postgres, and uses Gemini with retrieval over web-performance docs (RAG on pgvector) to suggest concrete code fixes for each problem. An eval harness measures whether RAG actually improves those fixes.
 
 ```
 client ──POST /scans──▶ API (Cloud Run) ──publish──▶ Pub/Sub "scans"
@@ -26,7 +26,7 @@ uvicorn services.api.main:app --reload      # in-memory store + queue
 Integration tests against real Postgres + pgvector (CI runs these in a separate job):
 ```bash
 docker compose up -d
-export TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/antarctica_test
+export TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/sn0wy_test
 python -m pytest tests/integration -q
 ```
 
@@ -43,16 +43,16 @@ The API still serves the older single-file UI at `/` (`services/api/static/index
 ## GitHub Action: perf check on every PR
 Scans your preview deploy, comments the score + top 3 fixes on the PR (one comment, updated on re-runs), and fails if the score drops more than `threshold` points below the baseline.
 ```yaml
-# .github/workflows/perf.yml in the repo you want checked
+# .github/workflows/perf.yml in the repo you wsn0wy checked
 on: pull_request
 permissions: { pull-requests: write }
 jobs:
   perf:
     runs-on: ubuntu-latest
     steps:
-      - uses: lyl4cs/antarctica/action@main
+      - uses: lyl4cs/sn0wy/action@main
         with:
-          api-url: https://<your-antarctica-api>
+          api-url: https://<your-sn0wy-api>
           url: https://<preview-url-for-this-pr>
           baseline-url: https://<your-production-site>   # optional, defaults to url
           threshold: 5                                   # optional
@@ -60,7 +60,7 @@ jobs:
 Outputs: `score`, `baseline`, `passed`. Logic lives in `scripts/pr_check.py` (stdlib only, unit-tested).
 
 ## MCP server: use it from Claude / Cursor
-`antarctica-mcp` exposes `run_audit`, `get_report`, `suggest_fixes`, `site_history` as MCP tools over stdio. Setup for Claude Desktop and Claude Code: [docs/MCP.md](docs/MCP.md).
+`sn0wy-mcp` exposes `run_audit`, `get_report`, `suggest_fixes`, `site_history` as MCP tools over stdio. Setup for Claude Desktop and Claude Code: [docs/MCP.md](docs/MCP.md).
 
 ## ADK agent: Gemini makes the plan
 `agent/` is a Google ADK agent that uses the MCP tools in a ReAct loop and returns a prioritized fix plan with a per-step trace. Setup: [agent/README.md](agent/README.md).
@@ -71,4 +71,4 @@ See [docs/SETUP.md](docs/SETUP.md). Design decisions and tradeoffs: [docs/DECISI
 ## Layout
 `services/` (API, scanner worker, shared store/queue) · `core/` (LLM clients, RAG, fix suggester, evals) · `frontend/` (React app, Vercel) · `mcp_server/` (MCP tools) · `infra/` (gcloud scripts) · `db/migrations/` · `scripts/` (doc fetch/ingest) · `docs/design/` (approved UI designs)
 
-Formerly known as Antarctica.
+Formerly known as antarctica.
