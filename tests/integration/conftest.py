@@ -33,5 +33,5 @@ def clean_db(db_url: str) -> str:
     import psycopg
 
     with psycopg.connect(db_url, autocommit=True) as conn:
-        conn.execute("TRUNCATE scans, audits, findings, doc_chunks, sites RESTART IDENTITY CASCADE")
+        conn.execute("TRUNCATE scans, audits, findings, doc_chunks, sites, rate_counters RESTART IDENTITY CASCADE")
     return db_url

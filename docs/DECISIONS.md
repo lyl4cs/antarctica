@@ -103,3 +103,11 @@ This file is your interview prep: "why did you choose X?" gets answered here.
 **Why:** On the live Novus report the model wrote `/images/model-lifestyle.jpg` and wrapped half its code in an HTML comment. Instructions reduce that; only a check catches it. Same-folder new names (`hero.webp` next to `hero.jpg`) are allowed on purpose, because that is what a format fix proposes.
 **Eval:** `unverified_urls` is a free, objective quality signal (rate of fixes with invented paths) to report next to the judge's accepted-fix rate. The judge and its methodology are unchanged.
 
+## 020: Rate limits in Postgres before going public
+**Decision:** Fixed-window counters in a `rate_counters` table, one atomic `INSERT ... ON CONFLICT DO UPDATE ... RETURNING count` per check. Per IP: 10 scans/hour, 30 AI fixes/hour (one unit per finding requested). Global: 300 scans/day, 600 AI fixes/day. Over the limit = HTTP 429 with `Retry-After`. All four numbers are env vars (`RL_*`).
+**Why:** The API is public and unauthenticated; scans and Gemini calls cost money. Shared once in a Discord, it already got strangers' traffic.
+**Why Postgres, not memory or Redis:** Cloud Run runs up to 3 API instances, so in-memory counters would give 3x the limit and reset on cold starts. Redis is another service to run; one upsert on Neon costs a few ms at this traffic.
+**Client IP:** the LAST `X-Forwarded-For` entry (Cloud Run appends the real caller; earlier entries are client-supplied and spoofable).
+**Tradeoff:** fixed windows allow a burst across a boundary; sliding windows aren't worth it here. IP limits don't stop a distributed attacker; the global cap is the backstop.
+**Usage numbers:** `GET /stats` (counts only, never URLs) for scans; Vercel Web Analytics for visitors.
+

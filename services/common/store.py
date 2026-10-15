@@ -14,12 +14,14 @@ does nothing on a duplicate. Same idea as Parallax's duplicate-order protection.
 
 from __future__ import annotations
 
+import random
 import uuid
 from datetime import UTC, datetime
 from typing import Protocol
+from urllib.parse import urlsplit
 
 from core.fixes.context import slim_lhr
-from services.common.models import Report, Scan, ScanSummary, StoredFinding
+from services.common.models import Report, Scan, ScanSummary, Stats, StoredFinding
 from services.scanner.parse import ParsedReport
 
 
@@ -38,6 +40,8 @@ class Store(Protocol):
     def get_report(self, scan_id: str) -> Report | None: ...
     def get_evidence(self, scan_id: str, audit_ids: list[str]) -> dict | None: ...
     def list_scans(self, url: str, limit: int = 20) -> list[ScanSummary]: ...
+    def hit(self, key: str, window_start: datetime, cost: int = 1) -> int: ...
+    def stats(self) -> Stats: ...
 
 
 class InMemoryStore:
@@ -45,6 +49,7 @@ class InMemoryStore:
         self.scans: dict[str, Scan] = {}
         self.reports: dict[str, ParsedReport] = {}
         self.raw: dict[str, dict] = {}
+        self.counters: dict[tuple[str, datetime], int] = {}
 
     def create_scan(self, url: str) -> Scan:
         scan = Scan(id=str(uuid.uuid4()), url=url, status="queued", created_at=_now())
@@ -102,6 +107,21 @@ class InMemoryStore:
     def get_evidence(self, scan_id: str, audit_ids: list[str]) -> dict | None:
         raw = self.raw.get(scan_id)
         return None if raw is None else slim_lhr(raw, audit_ids)
+
+    def hit(self, key: str, window_start: datetime, cost: int = 1) -> int:
+        k = (key, window_start)
+        self.counters[k] = self.counters.get(k, 0) + cost
+        return self.counters[k]
+
+    def stats(self) -> Stats:
+        week_ago = _now().timestamp() - 7 * 86400
+        scans = list(self.scans.values())
+        return Stats(
+            total_scans=len(scans),
+            completed_scans=sum(sc.status == "done" for sc in scans),
+            unique_sites=len({urlsplit(sc.url).hostname for sc in scans}),
+            scans_last_7_days=sum(sc.created_at.timestamp() >= week_ago for sc in scans),
+        )
 
     def list_scans(self, url: str, limit: int = 20) -> list[ScanSummary]:
         scans = sorted(
@@ -249,6 +269,32 @@ class PostgresStore:  # pragma: no cover - exercised against a real DB
                 ([*audit_ids, "network-requests"], scan_id),
             ).fetchone()
         return row[0] if row else None
+
+    def hit(self, key: str, window_start: datetime, cost: int = 1) -> int:
+        """Atomic add-and-read of one rate-limit counter (see services/api/ratelimit.py)."""
+        with self._conn() as c:
+            count = c.execute(
+                """INSERT INTO rate_counters (key, window_start, count) VALUES (%s, %s, %s)
+                   ON CONFLICT (key, window_start)
+                   DO UPDATE SET count = rate_counters.count + EXCLUDED.count
+                   RETURNING count""",
+                (key, window_start, cost),
+            ).fetchone()[0]
+            if random.random() < 0.01:  # occasionally prune windows older than 2 days
+                c.execute("DELETE FROM rate_counters WHERE window_start < now() - interval '2 days'")
+            return count
+
+    def stats(self) -> Stats:
+        with self._conn() as c:
+            row = c.execute(
+                """SELECT count(*),
+                          count(*) FILTER (WHERE status = 'done'),
+                          count(DISTINCT split_part(url, '/', 3)),
+                          count(*) FILTER (WHERE created_at > now() - interval '7 days')
+                   FROM scans"""
+            ).fetchone()
+        return Stats(total_scans=row[0], completed_scans=row[1], unique_sites=row[2],
+                     scans_last_7_days=row[3])
 
     def list_scans(self, url: str, limit: int = 20) -> list[ScanSummary]:
         return self._summaries("WHERE s.url = %s", (url,), limit)

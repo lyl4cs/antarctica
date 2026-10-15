@@ -60,3 +60,13 @@ class ScanSummary(BaseModel):
 
     scan: Scan
     performance_score: int | None
+
+
+class Stats(BaseModel):
+    """Public usage numbers (GET /stats). Counts only, never URLs (ADR 017)."""
+
+    total_scans: int
+    completed_scans: int
+    unique_sites: int
+    scans_last_7_days: int
+
