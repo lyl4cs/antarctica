@@ -1,5 +1,5 @@
 /**
- * Typed client for the Antarctica API.
+ * Typed client for the sn0wy API.
  *
  * HOW IT WORKS
  * Every backend call in the app goes through this one module. The TypeScript types
@@ -138,7 +138,7 @@ export function createApi(baseUrl: string, fetchFn: FetchFn = (i, init) => fetch
       // Our own cancellation (page unmounted): not an error, let callers ignore it.
       // Checked by name because DOMException differs between browser and test realms.
       if ((e as { name?: string } | null)?.name === "AbortError") throw e;
-      throw new ApiError(NETWORK_ERROR, `Can't reach the Antarctica API at ${base}.`);
+      throw new ApiError(NETWORK_ERROR, `Can't reach the sn0wy API at ${base}.`);
     }
     let body: unknown = null;
     try {

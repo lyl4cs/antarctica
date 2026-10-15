@@ -1,49 +1,91 @@
 # sn0wy
 
-**A website speed auditor with AI fix suggestions, on Google Cloud.** Submit a URL. Sn0wy runs Lighthouse on a queue of Cloud Run workers, stores the results in Postgres, and uses Gemini with retrieval over web-performance docs (RAG on pgvector) to suggest concrete code fixes for each problem. An eval harness measures whether RAG actually improves those fixes.
+**Paste a URL. Get the files that are slowing your page down, and a fix for each one.**
 
-```
-client ──POST /scans──▶ API (Cloud Run) ──publish──▶ Pub/Sub "scans"
-                          │                              │ push (retry w/ backoff, DLQ after 5)
-                          │                              ▼
-                          │                     Scanner (Cloud Run, Lighthouse)
-                          ▼                              │
-                    Postgres (Neon) ◀────────────────────┘   scans · audits · findings
-                    + pgvector       ◀── RAG ── doc_chunks (web.dev + Chrome docs, Vertex embeddings)
-                          │
-              GET /scans/{id}/fixes ──▶ Gemini (Vertex AI) ──▶ fix + code, grounded in sources
-                          │
-                 core/evals: accepted-fix rate with vs. without RAG · p95 · tokens/s · $/request
-```
+Lighthouse tells you *"reduce unused JavaScript."* sn0wy tells you *which file*, how many KB of it never runs, and what to change — with the web.dev docs it got that from, and a warning if it made up a path.
 
-## Run locally (no cloud needed)
+**[Try it → www.sn0wy.dev](https://www.sn0wy.dev)** · no sign-up, a scan takes 30–60 seconds
+
+<p align="center">
+  <img src="docs/images/home.png" alt="sn0wy home page: a URL field, and an iceberg showing three problems hiding below the waterline" width="820">
+</p>
+
+## What you get
+
+A score and the five Core Web Vitals, then every finding ranked by how much time it would actually save:
+
+<p align="center">
+  <img src="docs/images/report.png" alt="Report page: performance score 47, LCP/TBT/CLS/FCP/SI tiles, and findings with a Get AI fix button" width="820">
+</p>
+
+Hit **Get AI fix** on any finding and Gemini writes a diagnosis, a fix, and a code snippet, grounded in retrieved web-performance docs and in the actual resources your page loaded. So instead of "compress your images" you get the filename, the current size, and the command.
+
+It also tells you what the site is built on (Shopify, Next.js, WordPress, or nothing it recognizes), because the right fix for a Shopify theme is not the right fix for a hand-rolled site.
+
+## The part I'd want you to look at
+
+The first version confidently told me to optimize `https://shopnovus.us/images/model-lifestyle.jpg`. That folder doesn't exist. The image was real, the path was invented, and nothing about the answer looked wrong.
+
+Telling the model not to invent paths helps and does not fix it. So every URL in a generated fix is now checked against the resources Lighthouse actually loaded. Same folder, new filename is fine — `hero.webp` next to the real `hero.jpg` is exactly what a "convert to WebP" fix should say. A folder the audit never saw gets flagged in the UI instead of being handed to you as fact.
+
+[`core/fixes/verify.py`](core/fixes/verify.py) · [`tests/test_fix_verify.py`](tests/test_fix_verify.py)
+
+## What it can't do
+
+- **Pages behind a login.** The scanner runs headless Chrome with no credentials, cookies, or custom headers. If the page needs auth, it can't be scanned. No workaround today.
+- **Client-rendered pages are fine**, for what it's worth — it's a real browser, and metrics are measured after the JavaScript runs. SPAs and heavy dynamic content scan correctly. Auth is the real gap, not rendering.
+- **One URL per scan.** It's not a crawler.
+- **Lab data, not field data.** Lighthouse's default mobile emulation and throttling, not your real users. Run-to-run variance is a few points; compare medians, not single runs.
+- **A fix is a suggestion, not a patch.** Nothing is applied or tested for you. The path check tells you a file is real, not that the change is right for your codebase.
+
+## How it works
+
+<p align="center">
+  <img src="docs/images/architecture.svg" alt="Browser to API on Cloud Run, which publishes to Pub/Sub, which pushes to the Lighthouse scanner; results in Neon Postgres; fixes from Gemini grounded by pgvector retrieval" width="900">
+</p>
+
+A scan is a queued job, not a long HTTP request: `POST /scans` returns immediately, Pub/Sub pushes the job to the scanner, and the browser polls. Failures retry with backoff and land in a dead-letter topic after five attempts. The scanner runs at concurrency 1 because one Chrome per container is all that fits, and `save_result` takes a row lock so a redelivered message can't write a scan twice.
+
+The fix path retrieves the top 5 chunks from an index of web.dev and Chrome documentation (Vertex `text-embedding-005`, 768 dims, HNSW cosine index in pgvector), and shows only the sources the model actually cites.
+
+Why each of these, and what the alternative was: [docs/DECISIONS.md](docs/DECISIONS.md).
+
+## Does the retrieval actually help?
+
+That's a claim, so there's a harness that measures it. `core/evals` runs the same findings with and without RAG and reports accepted-fix rate against hand-written references, p95 latency, tokens/sec, and cost per request. A fix costs about $0.0007 and takes 3–5 seconds.
+
+## Run it locally
+
+No cloud account needed — it falls back to an in-memory store and queue.
+
 ```bash
 pip install -e ".[dev,ai]"
-python -m pytest -q                         # 33 offline tests (DB tests skip)
-uvicorn services.api.main:app --reload      # in-memory store + queue
+python -m pytest -q                         # offline tests; DB tests skip
+uvicorn services.api.main:app --reload      # http://127.0.0.1:8000
 ```
 
-Integration tests against real Postgres + pgvector (CI runs these in a separate job):
+With the React app:
+
+```bash
+cd frontend && npm ci && npm run dev        # http://localhost:5173
+```
+
+Integration tests against real Postgres + pgvector (CI runs these as a separate job and fails if any skip):
+
 ```bash
 docker compose up -d
 export TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/sn0wy_test
 python -m pytest tests/integration -q
 ```
 
-## Frontend
-A React + TypeScript app in [`frontend/`](frontend/) (Vite, hosted on Vercel), built from the Claude Design files in [`docs/design/`](docs/design/). Start a scan, watch it run, read the report and ask for AI fixes, and compare any two scans of a site over time. It polls the API every 2 s while a scan runs.
-```bash
-uvicorn services.api.main:app --reload --port 8000   # terminal 1
-cd frontend && npm ci && npm run dev                  # terminal 2 -> http://localhost:5173
-```
-Deploying to Vercel, and why it's a separate app instead of being served by FastAPI: [frontend/README.md](frontend/README.md), ADR 014.
+Deploying your own: [docs/SETUP.md](docs/SETUP.md).
 
-The API still serves the older single-file UI at `/` (`services/api/static/index.html`); it is kept as a no-build fallback and is covered by a test.
+## Three other ways to use it
 
-## GitHub Action: perf check on every PR
-Scans your preview deploy, comments the score + top 3 fixes on the PR (one comment, updated on re-runs), and fails if the score drops more than `threshold` points below the baseline.
+**GitHub Action** — scans your preview deploy on every PR, comments the score and top 3 fixes (one comment, updated in place), and fails the check if the score drops more than `threshold` points below your production baseline.
+
 ```yaml
-# .github/workflows/perf.yml in the repo you wsn0wy checked
+# .github/workflows/perf.yml in the repo you want checked
 on: pull_request
 permissions: { pull-requests: write }
 jobs:
@@ -57,18 +99,24 @@ jobs:
           baseline-url: https://<your-production-site>   # optional, defaults to url
           threshold: 5                                   # optional
 ```
-Outputs: `score`, `baseline`, `passed`. Logic lives in `scripts/pr_check.py` (stdlib only, unit-tested).
 
-## MCP server: use it from Claude / Cursor
-`sn0wy-mcp` exposes `run_audit`, `get_report`, `suggest_fixes`, `site_history` as MCP tools over stdio. Setup for Claude Desktop and Claude Code: [docs/MCP.md](docs/MCP.md).
+**MCP server** — `sn0wy-mcp` exposes `run_audit`, `get_report`, `suggest_fixes`, and `site_history` over stdio, so Claude or Cursor can audit a site mid-conversation. Setup: [docs/MCP.md](docs/MCP.md).
 
-## ADK agent: Gemini makes the plan
-`agent/` is a Google ADK agent that uses the MCP tools in a ReAct loop and returns a prioritized fix plan with a per-step trace. Setup: [agent/README.md](agent/README.md).
-
-## Deploy
-See [docs/SETUP.md](docs/SETUP.md). Design decisions and tradeoffs: [docs/DECISIONS.md](docs/DECISIONS.md).
+**ADK agent** — a Google ADK agent that drives those MCP tools in a ReAct loop and returns a prioritized plan with a per-step trace of latency and tokens. Setup: [agent/README.md](agent/README.md).
 
 ## Layout
-`services/` (API, scanner worker, shared store/queue) · `core/` (LLM clients, RAG, fix suggester, evals) · `frontend/` (React app, Vercel) · `mcp_server/` (MCP tools) · `infra/` (gcloud scripts) · `db/migrations/` · `scripts/` (doc fetch/ingest) · `docs/design/` (approved UI designs)
 
-Formerly known as antarctica.
+| | |
+|---|---|
+| `services/` | API, scanner worker, shared store and queue |
+| `core/` | LLM clients, RAG, fix suggester, path verification, evals |
+| `frontend/` | React + TypeScript app on Vercel |
+| `mcp_server/` · `agent/` | MCP tools and the ADK agent |
+| `infra/` · `db/migrations/` | gcloud scripts, numbered SQL |
+| `docs/` | [DECISIONS.md](docs/DECISIONS.md) (why), [SETUP.md](docs/SETUP.md) (how), [TASKS.md](docs/TASKS.md) (next) |
+
+## Found something wrong?
+
+Especially interested in fixes that are confidently wrong, or a path the checker should have flagged and didn't. [Open an issue](https://github.com/lyl4cs/sn0wy/issues) with the URL you scanned and what you got.
+
+Built by [Layth Sarama](https://github.com/lyl4cs). Formerly called antarctica.

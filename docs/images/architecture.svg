@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 470" width="980" height="470" font-family="ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#5b6670"/>
+    </marker>
+    <style>
+      .box   { fill:#ffffff; stroke:#dcebf4; stroke-width:1.5; rx:12; }
+      .ice   { fill:#f4f9fc; stroke:#dcebf4; stroke-width:1.5; }
+      .t     { fill:#12202b; font-size:15px; font-weight:700; }
+      .s     { fill:#5b6670; font-size:12.5px; }
+      .lbl   { fill:#5b6670; font-size:11.5px; }
+      .wire  { stroke:#5b6670; stroke-width:1.5; fill:none; marker-end:url(#a); }
+      .dash  { stroke:#8a939a; stroke-width:1.4; fill:none; stroke-dasharray:4 4; marker-end:url(#a); }
+      .cap   { fill:#8a939a; font-size:11px; letter-spacing:.08em; font-weight:700; }
+    </style>
+  </defs>
+
+  <rect width="980" height="470" fill="#fbf8f2"/>
+
+  <!-- browser -->
+  <rect class="box" x="24" y="56" width="150" height="66"/>
+  <text class="t" x="44" y="84">Browser</text>
+  <text class="s" x="44" y="104">React · Vercel</text>
+
+  <!-- api -->
+  <rect class="box" x="246" y="46" width="186" height="86"/>
+  <text class="t" x="266" y="74">API</text>
+  <text class="s" x="266" y="94">Cloud Run · FastAPI</text>
+  <text class="s" x="266" y="112">rate limits, reports</text>
+
+  <!-- pubsub -->
+  <rect class="box" x="506" y="46" width="166" height="86"/>
+  <text class="t" x="526" y="74">Pub/Sub</text>
+  <text class="s" x="526" y="94">push delivery</text>
+  <text class="s" x="526" y="112">5 retries → DLQ</text>
+
+  <!-- scanner -->
+  <rect class="box" x="748" y="46" width="208" height="86"/>
+  <text class="t" x="768" y="74">Scanner</text>
+  <text class="s" x="768" y="94">Cloud Run · concurrency 1</text>
+  <text class="s" x="768" y="112">Lighthouse + headless Chrome</text>
+
+  <!-- postgres -->
+  <rect class="ice" x="506" y="212" width="450" height="92" rx="12"/>
+  <text class="t" x="526" y="240">Postgres (Neon)</text>
+  <text class="s" x="526" y="260">scans · audits · findings · rate_counters</text>
+  <text class="s" x="526" y="280">pgvector: doc_chunks — chunked web-performance docs</text>
+
+  <!-- gemini -->
+  <rect class="box" x="246" y="212" width="186" height="92"/>
+  <text class="t" x="266" y="240">Gemini</text>
+  <text class="s" x="266" y="260">Vertex AI</text>
+  <text class="s" x="266" y="280">2.5 Flash</text>
+
+  <!-- wires: top row -->
+  <path class="wire" d="M178 76 H240"/>
+  <text class="lbl" x="60" y="146">POST /scans</text>
+  <path class="wire" d="M178 108 H240"/>
+  <text class="lbl" x="60" y="164">GET report, fixes</text>
+  <path class="wire" d="M436 89 H500"/>
+  <text class="lbl" x="440" y="81">publish</text>
+  <path class="wire" d="M678 89 H742"/>
+  <text class="lbl" x="682" y="81">push</text>
+
+  <!-- scanner writes down into postgres -->
+  <path class="wire" d="M852 136 V206"/>
+  <text class="lbl" x="862" y="176">metrics + findings</text>
+
+  <!-- api asks gemini for a fix -->
+  <path class="wire" d="M330 138 V206"/>
+  <text class="lbl" x="340" y="176">one finding → one fix</text>
+
+  <!-- gemini <-> postgres retrieval -->
+  <path class="dash" d="M438 250 H500"/>
+  <text class="lbl" x="440" y="242">top-5 chunks</text>
+  <path class="dash" d="M500 282 H438"/>
+
+  <!-- verification note -->
+  <rect class="ice" x="24" y="352" width="932" height="86" rx="12"/>
+  <text class="cap" x="46" y="380">BEFORE A FIX IS SHOWN</text>
+  <text class="s" x="46" y="404" font-size="13.5">Every file path the model writes is checked against the resources Lighthouse actually loaded.</text>
+  <text class="s" x="46" y="424" font-size="13.5">A path from a folder the audit never saw is flagged in the UI instead of being presented as fact.</text>
+
+  <text class="cap" x="24" y="34">REQUEST PATH</text>
+  <text class="cap" x="24" y="196">FIX PATH</text>
+</svg>
