@@ -44,7 +44,7 @@
   <rect class="ice" x="506" y="212" width="450" height="92" rx="12"/>
   <text class="t" x="526" y="240">Postgres (Neon)</text>
   <text class="s" x="526" y="260">scans · audits · findings · rate_counters</text>
-  <text class="s" x="526" y="280">pgvector: doc_chunks — chunked web-performance docs</text>
+  <text class="s" x="526" y="280">pgvector: doc_chunks, chunked web-performance docs</text>
 
   <!-- gemini -->
   <rect class="box" x="246" y="212" width="186" height="92"/>

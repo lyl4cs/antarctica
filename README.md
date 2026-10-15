@@ -2,7 +2,7 @@
 
 **Paste a URL. Get the files that are slowing your page down, and a fix for each one.**
 
-Lighthouse tells you *"reduce unused JavaScript."* sn0wy tells you *which file*, how many KB of it never runs, and what to change — with the web.dev docs it got that from, and a warning if it made up a path.
+Lighthouse tells you *"reduce unused JavaScript."* sn0wy tells you *which file*, how many KB of it never runs, and what to change, with the web.dev docs it got that from, and a warning if it made up a path.
 
 **[Try it → www.sn0wy.dev](https://www.sn0wy.dev)** · no sign-up, a scan takes 30–60 seconds
 
@@ -26,14 +26,14 @@ It also tells you what the site is built on (Shopify, Next.js, WordPress, or not
 
 The first version confidently told me to optimize `https://shopnovus.us/images/model-lifestyle.jpg`. That folder doesn't exist. The image was real, the path was invented, and nothing about the answer looked wrong.
 
-Telling the model not to invent paths helps and does not fix it. So every URL in a generated fix is now checked against the resources Lighthouse actually loaded. Same folder, new filename is fine — `hero.webp` next to the real `hero.jpg` is exactly what a "convert to WebP" fix should say. A folder the audit never saw gets flagged in the UI instead of being handed to you as fact.
+Telling the model not to invent paths helps and does not fix it. So every URL in a generated fix is now checked against the resources Lighthouse actually loaded. Same folder, new filename is fine. `hero.webp` next to the real `hero.jpg` is exactly what a "convert to WebP" fix should say. A folder the audit never saw gets flagged in the UI instead of being handed to you as fact.
 
 [`core/fixes/verify.py`](core/fixes/verify.py) · [`tests/test_fix_verify.py`](tests/test_fix_verify.py)
 
 ## What it can't do
 
 - **Pages behind a login.** The scanner runs headless Chrome with no credentials, cookies, or custom headers. If the page needs auth, it can't be scanned. No workaround today.
-- **Client-rendered pages are fine**, for what it's worth — it's a real browser, and metrics are measured after the JavaScript runs. SPAs and heavy dynamic content scan correctly. Auth is the real gap, not rendering.
+- **Client-rendered pages are fine**, for what it's worth. It's a real browser, and metrics are measured after the JavaScript runs. SPAs and heavy dynamic content scan correctly. Auth is the real gap, not rendering.
 - **One URL per scan.** It's not a crawler.
 - **Lab data, not field data.** Lighthouse's default mobile emulation and throttling, not your real users. Run-to-run variance is a few points; compare medians, not single runs.
 - **A fix is a suggestion, not a patch.** Nothing is applied or tested for you. The path check tells you a file is real, not that the change is right for your codebase.
@@ -56,7 +56,7 @@ That's a claim, so there's a harness that measures it. `core/evals` runs the sam
 
 ## Run it locally
 
-No cloud account needed — it falls back to an in-memory store and queue.
+No cloud account needed, it falls back to an in-memory store and queue.
 
 ```bash
 pip install -e ".[dev,ai]"
@@ -82,7 +82,7 @@ Deploying your own: [docs/SETUP.md](docs/SETUP.md).
 
 ## Three other ways to use it
 
-**GitHub Action** — scans your preview deploy on every PR, comments the score and top 3 fixes (one comment, updated in place), and fails the check if the score drops more than `threshold` points below your production baseline.
+**GitHub Action.** Scans your preview deploy on every PR, comments the score and top 3 fixes (one comment, updated in place), and fails the check if the score drops more than `threshold` points below your production baseline.
 
 ```yaml
 # .github/workflows/perf.yml in the repo you want checked
@@ -100,9 +100,9 @@ jobs:
           threshold: 5                                   # optional
 ```
 
-**MCP server** — `sn0wy-mcp` exposes `run_audit`, `get_report`, `suggest_fixes`, and `site_history` over stdio, so Claude or Cursor can audit a site mid-conversation. Setup: [docs/MCP.md](docs/MCP.md).
+**MCP server.** `sn0wy-mcp` exposes `run_audit`, `get_report`, `suggest_fixes`, and `site_history` over stdio, so Claude or Cursor can audit a site mid-conversation. Setup: [docs/MCP.md](docs/MCP.md).
 
-**ADK agent** — a Google ADK agent that drives those MCP tools in a ReAct loop and returns a prioritized plan with a per-step trace of latency and tokens. Setup: [agent/README.md](agent/README.md).
+**ADK agent.** A Google ADK agent that drives those MCP tools in a ReAct loop and returns a prioritized plan with a per-step trace of latency and tokens. Setup: [agent/README.md](agent/README.md).
 
 ## Layout
 
