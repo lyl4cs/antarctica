@@ -1,4 +1,4 @@
-# Sn0wy
+# sn0wy
 
 **A website speed auditor with AI fix suggestions, on Google Cloud.** Submit a URL. Sn0wy runs Lighthouse on a queue of Cloud Run workers, stores the results in Postgres, and uses Gemini with retrieval over web-performance docs (RAG on pgvector) to suggest concrete code fixes for each problem. An eval harness measures whether RAG actually improves those fixes.
 
