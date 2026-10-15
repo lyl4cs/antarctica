@@ -16,7 +16,7 @@ export function Layout() {
           <Link to="/" className="brand" aria-label="Sn0wy home">
             <LogoMark />
             <span className="brand-name" aria-hidden="true">
-              antarctica
+              sn0wy
             </span>
           </Link>
           <nav aria-label="Primary" className="nav">
