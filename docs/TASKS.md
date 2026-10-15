@@ -60,3 +60,6 @@
 ### A12: Fix polish ✅ DONE
 > URL verification against audit evidence (`core/fixes/verify.py`), stricter one-snippet prompt, inline code rendering, warning UI, MCP passthrough. ADR 019.
 
+### A13: Launch guard ✅ DONE
+> Postgres-backed rate limits (per IP + global, 429 + Retry-After), `GET /stats`, Vercel Web Analytics. ADR 020. Owner: run migration 003 BEFORE deploying.
+

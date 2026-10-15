@@ -132,3 +132,25 @@ def test_get_evidence_matches_python_slim_extract(clean_db, scan_result):
     ids = ["unused-javascript", "render-blocking-resources"]
     assert store.get_evidence(scan.id, ids) == slim_lhr(raw, ids)
     assert store.get_evidence(str(uuid.uuid4()), ids) is None
+
+
+def test_rate_counter_upsert_is_atomic_and_windowed(clean_db):
+    from datetime import UTC, datetime
+
+    store = PostgresStore(clean_db)
+    w1 = datetime(2026, 10, 15, 13, tzinfo=UTC)
+    w2 = datetime(2026, 10, 15, 14, tzinfo=UTC)
+    assert store.hit("scan:ip:1.2.3.4", w1) == 1
+    assert store.hit("scan:ip:1.2.3.4", w1, 3) == 4
+    assert store.hit("scan:ip:1.2.3.4", w2) == 1   # new window starts over
+    assert store.hit("scan:ip:5.6.7.8", w1) == 1   # other key independent
+
+
+def test_stats_counts(clean_db, scan_result):
+    store = PostgresStore(clean_db)
+    a = store.create_scan("https://a.com/")
+    store.save_result(a.id, scan_result.report, scan_result.raw, 1.0)
+    store.create_scan("https://a.com/other")
+    store.create_scan("https://b.com/")
+    s = store.stats()
+    assert (s.total_scans, s.completed_scans, s.unique_sites, s.scans_last_7_days) == (3, 1, 2, 3)

@@ -15,7 +15,7 @@ from dataclasses import asdict
 from functools import lru_cache
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, HttpUrl
@@ -24,8 +24,9 @@ from core.fixes.context import Offender, detect_platform, extract_offenders
 from core.fixes.suggest import FindingInput, suggest_fix
 from core.llm import LLM
 from core.rag.retrieve import Retriever
+from services.api.ratelimit import DAY, HOUR, Limits, client_ip, enforce
 from services.common.config import get_settings
-from services.common.models import OffenderOut, PlatformOut, Report, Scan, ScanSummary
+from services.common.models import OffenderOut, PlatformOut, Report, Scan, ScanSummary, Stats
 from services.common.queue import InMemoryPublisher, Publisher, PubSubPublisher
 from services.common.store import InMemoryStore, PostgresStore, Store
 
@@ -68,15 +69,32 @@ def health() -> dict:
     return {"ok": True}
 
 
+@lru_cache
+def get_limits() -> Limits:
+    return Limits.from_env()
+
+
 @app.post("/scans", status_code=202)
 def create_scan(
     req: ScanRequest,
+    request: Request,
     store: Store = Depends(get_store),
     publisher: Publisher = Depends(get_publisher),
+    limits: Limits = Depends(get_limits),
 ) -> Scan:
+    # Per-visitor first: a single abuser hits their own limit before eating the global one.
+    enforce(store, f"scan:ip:{client_ip(request)}", limits.scans_per_ip_per_hour, HOUR,
+            what="scans")
+    enforce(store, "scan:global", limits.scans_per_day, DAY, what="scans today (site-wide)")
     scan = store.create_scan(str(req.url))
     publisher.publish({"scan_id": scan.id, "url": scan.url})
     return scan
+
+
+@app.get("/stats")
+def stats(store: Store = Depends(get_store)) -> Stats:
+    """Public usage counts for a stats badge/page. Counts only: never which URLs."""
+    return store.stats()
 
 
 @app.get("/sites/scans")
@@ -154,15 +172,23 @@ class FixOut(BaseModel):
 @app.get("/scans/{scan_id}/fixes")
 def get_fixes(
     scan_id: str,
+    request: Request,
     limit: int = 3,
     rag: bool = True,
     store: Store = Depends(get_store),
     ai: tuple[LLM, Retriever] | None = Depends(get_ai),
+    limits: Limits = Depends(get_limits),
 ) -> list[FixOut]:
     """AI fix suggestions for the top-N findings (biggest estimated savings first)."""
     if ai is None:
         raise HTTPException(status_code=503, detail="AI not configured (PROJECT_ID/DATABASE_URL)")
     report = get_report(scan_id, store)
+    # Each finding is one Gemini call, so a request costs as many units as fixes it asks for.
+    cost = len(report.findings[: max(1, min(limit, 10))]) or 1
+    enforce(store, f"fix:ip:{client_ip(request)}", limits.fixes_per_ip_per_hour, HOUR, cost,
+            what="AI fixes")
+    enforce(store, "fix:global", limits.fixes_per_day, DAY, cost,
+            what="AI fixes today (site-wide)")
     llm, retriever = ai
     # Rebuild the full Platform (with prompt guidance) from the same evidence.
     ev = store.get_evidence(scan_id, [f.audit_id for f in report.findings])
