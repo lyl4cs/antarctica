@@ -38,7 +38,6 @@ class Store(Protocol):
     def get_report(self, scan_id: str) -> Report | None: ...
     def get_evidence(self, scan_id: str, audit_ids: list[str]) -> dict | None: ...
     def list_scans(self, url: str, limit: int = 20) -> list[ScanSummary]: ...
-    def list_recent(self, limit: int = 20) -> list[ScanSummary]: ...
 
 
 class InMemoryStore:
@@ -109,10 +108,6 @@ class InMemoryStore:
             (sc for sc in self.scans.values() if sc.url == url),
             key=lambda sc: sc.created_at, reverse=True,
         )[:limit]
-        return self._summaries(scans)
-
-    def list_recent(self, limit: int = 20) -> list[ScanSummary]:
-        scans = sorted(self.scans.values(), key=lambda sc: sc.created_at, reverse=True)[:limit]
         return self._summaries(scans)
 
 
@@ -257,6 +252,3 @@ class PostgresStore:  # pragma: no cover - exercised against a real DB
 
     def list_scans(self, url: str, limit: int = 20) -> list[ScanSummary]:
         return self._summaries("WHERE s.url = %s", (url,), limit)
-
-    def list_recent(self, limit: int = 20) -> list[ScanSummary]:
-        return self._summaries("", (), limit)

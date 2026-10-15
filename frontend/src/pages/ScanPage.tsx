@@ -37,6 +37,7 @@ import {
   formatDuration,
   formatTime,
 } from "../lib/format";
+import { rememberScan } from "../lib/recentScans";
 import { mood, steps, ticks, type Phase } from "../lib/scanProgress";
 import { useTitle } from "../lib/useTitle";
 
@@ -107,6 +108,7 @@ export function useRescan() {
     setError(null);
     try {
       const s = await api.createScan(url);
+      rememberScan(s);
       navigate(`/scans/${s.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't start a new scan.");

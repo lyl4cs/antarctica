@@ -162,9 +162,6 @@ export function createApi(baseUrl: string, fetchFn: FetchFn = (i, init) => fetch
         body: JSON.stringify({ url }),
         signal,
       }),
-    /** GET /scans?limit= : newest scans across all URLs. */
-    listRecent: (limit = 20, signal?: AbortSignal) =>
-      request<ScanSummary[]>(`/scans?limit=${limit}`, { signal }),
     /** GET /scans/{id} */
     getScan: (id: string, signal?: AbortSignal) =>
       request<Scan>(`/scans/${q(id)}`, { signal }),

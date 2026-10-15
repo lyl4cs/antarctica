@@ -77,25 +77,14 @@ def test_site_history_newest_first_with_scores(ctx, scan_result):
     assert hist[0]["performance_score"] is None and hist[1]["performance_score"] == 47
 
 
-def test_recent_scans_across_urls_newest_first(ctx, scan_result):
-    client, store, _ = ctx
-    a = client.post("/scans", json={"url": "https://a.com"}).json()["id"]
-    store.save_result(a, scan_result.report, scan_result.raw, scan_result.duration_ms)
-    b = client.post("/scans", json={"url": "https://b.com"}).json()["id"]
-    c = client.post("/scans", json={"url": "https://a.com"}).json()["id"]
-
-    res = client.get("/scans")
-    assert res.status_code == 200  # not swallowed by GET /scans/{scan_id}
-    recent = res.json()
-    assert [r["scan"]["id"] for r in recent] == [c, b, a]
-    assert [r["performance_score"] for r in recent] == [None, None, 47]
-    assert [r["scan"]["id"] for r in client.get("/scans?limit=2").json()] == [c, b]
-    assert len(client.get("/scans?limit=0").json()) == 1  # clamped to at least 1
-
-
-def test_recent_scans_empty(ctx):
+def test_no_global_scan_listing(ctx):
+    """GET /scans used to list every visitor's scans (a privacy leak, ADR 017).
+    Only POST /scans remains on that path, so a GET is "method not allowed"."""
     client, _, _ = ctx
-    assert client.get("/scans").json() == []
+    client.post("/scans", json={"url": "https://private-staging.example"})
+    res = client.get("/scans")
+    assert res.status_code == 405
+    assert "private-staging" not in res.text
 
 
 def test_cors_allows_configured_frontend_origin(ctx):

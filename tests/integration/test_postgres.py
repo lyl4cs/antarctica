@@ -98,19 +98,6 @@ def test_list_scans_newest_first_with_scores(clean_db, scan_result):
     assert len(store.list_scans("https://a.com", limit=1)) == 1
 
 
-def test_list_recent_across_urls_newest_first(clean_db, scan_result):
-    store = PostgresStore(clean_db)
-    first = store.create_scan("https://a.com")
-    store.save_result(first.id, scan_result.report, scan_result.raw, 1.0)
-    second = store.create_scan("https://b.com")
-    third = store.create_scan("https://a.com")
-
-    recent = store.list_recent()
-    assert [r.scan.id for r in recent] == [third.id, second.id, first.id]
-    assert [r.performance_score for r in recent] == [None, None, 47]  # LEFT JOIN keeps unscored
-    assert [r.scan.id for r in store.list_recent(limit=2)] == [third.id, second.id]
-
-
 def test_pgvector_retrieval_ranks_relevant_chunk_first(clean_db):
     doc = (
         "# Defer non-critical CSS\nRender blocking stylesheets delay first paint.\n\n"
