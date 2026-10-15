@@ -85,6 +85,11 @@ This file is your interview prep: "why did you choose X?" gets answered here.
 **Single agent, not multi-agent:** One LlmAgent with a ReAct loop and a self-check step in the instruction. ADR 011 still holds: add sub-agents only if traces show one agent failing at a step a specialist would fix.
 **Tracing:** ADK before/after callbacks record every model and tool call with latency (perf_counter, ms) and token counts, so cost and slowness are attributable to a step.
 
+## 017: Recent scans are per-browser, not global
+**Decision:** The home page shows "Your recent scans": ids this browser started, kept in localStorage and looked up one by one. The global `GET /scans` listing is removed. A curated "Example reports" section (`frontend/src/examples.ts`) shows real results to first-time visitors.
+**Why:** The global list showed every visitor every URL anyone had scanned (staging sites, private pages), a privacy leak, and it made demos depend on whatever strangers had scanned.
+**Tradeoffs:** No history across devices without accounts (deliberately out of scope). Per-URL history (`GET /sites/scans?url=`) stays public, like PageSpeed Insights, since you must already know the URL. Report links stay shareable because scan ids are random UUIDs. Migration 002's index is now unused but stays: applied migrations are never edited.
+
 ## 018: Fix prompts carry audit evidence (v2)
 **Decision:** Every fix prompt now includes (1) the exact offending resources from Lighthouse's audit details with their waste, (2) the platform detected from evidence (Lighthouse stack packs + URL fingerprints in network requests), and (3) a one-line guide to what the audit measures.
 **Why:** v1 fixes were generic (`flower.jpg`), assumed a stack, repeated the same answer for different image audits, and listed one source four times. The evidence was already in the stored raw JSON; we just weren't using it.

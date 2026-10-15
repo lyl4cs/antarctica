@@ -24,14 +24,12 @@ describe("createApi", () => {
 
   it("builds every GET path, encoding ids and URLs", async () => {
     const { api, fetchFn } = setup(jsonResponse([]));
-    await api.listRecent(6);
     await api.getScan("a/b");
     await api.getReport("x");
     await api.getFixes("x", 3);
     await api.siteHistory("https://a.com/?q=1");
     const urls = fetchFn.mock.calls.map((c) => (c as unknown as [string])[0]);
     expect(urls).toEqual([
-      "https://api.test/scans?limit=6",
       "https://api.test/scans/a%2Fb",
       "https://api.test/scans/x/report",
       "https://api.test/scans/x/fixes?limit=3",

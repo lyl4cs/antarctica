@@ -9,7 +9,7 @@ The look comes from the approved Claude Design files in [`docs/design/`](../docs
 ### Routes
 | Path | Page | API calls |
 |---|---|---|
-| `/` | Start a scan, recent scans | `POST /scans`, `GET /scans?limit=6` |
+| `/` | Start a scan, your recent scans (this browser), example reports | `POST /scans`, `GET /scans/{id}`, `GET /scans/{id}/report` |
 | `/scans/:id` | Live status: queued, running, ready, failed | `GET /scans/{id}` every 2 s until it's done or failed; Retry is a new `POST /scans` |
 | `/scans/:id/report` | Score, 5 core metrics, findings, AI fixes | `GET /scans/{id}/report`, `GET /scans/{id}/fixes?limit=N` |
 | `/history?url=…` | Score chart, before/after diff, all scans | `GET /sites/scans?url=…`, plus `GET /scans/{id}/report` for the two scans being compared |
@@ -76,3 +76,11 @@ npm run build
    Several origins are comma-separated: `FRONTEND_ORIGIN="https://antarctica.vercel.app,https://antarctica-git-main-you.vercel.app"`. Keep passing `FRONTEND_ORIGIN` on every later deploy, because `--set-env-vars` replaces the whole list and the API would fall back to allowing only localhost.
 
 If the page loads but every request fails with status 0, it's almost always CORS: the browser console says "blocked by CORS policy", and the fix is step 5 with the exact origin shown there.
+
+## Your recent scans (privacy)
+There is no global scan list. The ids of scans started in this browser are kept in
+localStorage (`src/lib/recentScans.ts`, key `antarctica.recentScans.v1`, newest 12)
+and looked up by id. Every storage call is wrapped in try/catch so private windows
+still work. Example reports on the home page come from `src/examples.ts`: edit that
+file to change them (see the comment at its top). ADR 017.
+
