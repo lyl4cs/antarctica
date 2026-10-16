@@ -189,3 +189,43 @@ def test_gzip_keeps_cors_headers(ctx, scan_result):
 
     assert res.headers["content-encoding"] == "gzip"
     assert res.headers["access-control-allow-origin"] == "http://localhost:5173"
+
+
+# --- security headers ------------------------------------------------------------
+# This service answers a browser directly (it serves its own index.html at /), so
+# it sets the same headers the frontend sets on Vercel. See main.SECURITY_HEADERS.
+
+
+def test_security_headers_on_an_api_response(ctx):
+    client, _, _ = ctx
+    res = client.get("/health")
+    assert res.headers["x-content-type-options"] == "nosniff"
+    assert res.headers["x-frame-options"] == "DENY"
+    assert "strict-origin" in res.headers["referrer-policy"]
+    assert "max-age=" in res.headers["strict-transport-security"]
+
+
+def test_security_headers_on_the_html_page(ctx):
+    """The page these actually protect."""
+    client, _, _ = ctx
+    res = client.get("/")
+    csp = res.headers["content-security-policy"]
+    assert "frame-ancestors 'none'" in csp
+    assert "object-src 'none'" in csp
+    assert "default-src 'self'" in csp
+
+
+def test_security_headers_survive_an_error_response(ctx):
+    """A 404 is still a response a browser renders."""
+    client, _, _ = ctx
+    res = client.get("/scans/nope")
+    assert res.status_code == 404
+    assert res.headers["x-content-type-options"] == "nosniff"
+
+
+def test_security_headers_do_not_clobber_cors(ctx):
+    """Two middlewares both touch headers; neither should win over the other."""
+    client, _, _ = ctx
+    res = client.get("/health", headers={"origin": "http://localhost:5173"})
+    assert res.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert res.headers["x-frame-options"] == "DENY"
