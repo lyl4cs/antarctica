@@ -94,13 +94,18 @@ export const CASE_STUDY: CaseStudy = {
       prs: [15, 16],
     },
     {
-      scanId: "",
-      title: "Compress the API (merged, awaiting deploy)",
+      scanId: "483b0735-5157-4cbb-bf26-a99c24c6f5d7",
+      title: "Compressed the API",
       detail:
-        "The last finding is not about this page at all: it is an API response on " +
-        "another host, which Cloud Run does not compress. GZipMiddleware is merged " +
-        "and takes effect on the next deploy of the API image.",
-      evidence: ["Report payload compresses 43% in testing"],
+        "The last finding was never about this page: it was an API response on " +
+        "another host, which Cloud Run does not compress on its own. GZipMiddleware " +
+        "on the API removed it. Three findings down to one.",
+      evidence: [
+        "Text-compression finding: gone",
+        "Findings: 3 → 1",
+        "Measured on Lighthouse 12.8.2; earlier scans ran an unrecorded 12.x",
+        "Most of the score change here is run-to-run variance in TBT, not this fix",
+      ],
       prs: [17],
     },
   ],
