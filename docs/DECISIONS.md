@@ -203,3 +203,64 @@ user knows their site is slow but has not heard of Total Blocking Time, so each 
 carries a plain-English explanation on the report and in the history diff, sourced from
 one `help` field on `METRICS` so both read the same text. It is a button, not a `title`
 attribute, because `title` never appears on touch and isn't keyboard reachable.
+
+
+## ADR 023: Tell the prompt what a resource IS, not just where it is
+
+**Context.** Scanning sn0wy's own site produced three findings and two wrong fixes. Both
+were wrong the same way: the model had a resource URL and knew what the *page* was built
+with, and silently assumed the two went together.
+
+- `unused-javascript` on the frontend bundle came back as "add `defer`". That is a no-op
+  twice over. Vite emits `<script type="module">`, which is already deferred, and `defer`
+  changes *when* a script runs, never how many of its bytes go unused. The audit guide
+  was partly to blame: it read "code-split, remove dead libraries, or defer third-party
+  scripts", and the model picked the phrase it recognised.
+- `uses-text-compression` came back as an nginx config block. There is no nginx. The
+  flagged response was not served by the scanned page's host at all: the page is on
+  Vercel, the response came from a FastAPI service on Cloud Run. The platform block, its
+  guidance and the placement line all describe the page's host, and all three were
+  applied to someone else's.
+
+**Decision, part 1: guides deny the wrong answer.** An audit guide that lists the right
+fix next to a plausible wrong one is not enough. `AUDIT_GUIDES["unused-javascript"]` now
+states that the audit measures bytes rather than timing, that `defer`/`async` do not
+reduce unused bytes, that a `type="module"` script is already deferred, and that a
+first-party bundle needs route- or component-level splitting while a third-party script
+needs removing.
+
+**Decision, part 2: host scope is explicit.** `foreign_host(page_url, offenders)` returns
+the single other host every offending resource sits on, or `None`. When it is set:
+
+- each resource line in the prompt is tagged with the host serving it and says it is not
+  the page's;
+- a note underneath states that the page's platform and guidance describe the page's host
+  only and say nothing about the other one;
+- `placement()` returns `CROSS_HOST_PLACEMENT` instead of the page platform's entry, so
+  the user is no longer told to edit a web server that is not involved.
+
+A prompt rule now scopes the platform block to the page's own host in every prompt,
+cross-host or not.
+
+**Why strict host comparison.** `api.example.com` and `www.example.com` are one owner but
+not one deployment, and that distinction *is* the bug. Comparing registrable domains would
+have called them the same party and missed it. No attempt is made to separate "my other
+service" from "third party": doing that correctly needs a public-suffix list, and doing it
+wrong would put back a confident wrong answer. The host is what we know, so the host is
+all we say.
+
+**Why only when ALL offenders agree.** A finding spanning both hosts keeps the page's
+guidance, where it is still partly right. The per-resource tag still fires for the odd one
+out. The override is for the unambiguous case where none of the page's guidance applies.
+
+**This keeps ADR 021.** Cross-host placement is another hand-written string in the same
+table, selected deterministically from data the audit already has. It is not model output,
+so a wrong entry is our bug and fixable for everyone at once.
+
+**Effect on the eval.** This changes the prompt, so absolute accepted-fix rate may move,
+most on `unused-javascript` cases and on any case with cross-host offenders. It is added
+identically to both arms, so the with-RAG vs without-RAG comparison the eval exists to
+make is unaffected. Input tokens go up, which moves `cost_per_request_usd` and
+`tokens_per_sec`: about +80 input tokens on every prompt from the scoping rule, +200 on an
+`unused-javascript` prompt, and +310 on a cross-host one. Any previously reported figure
+was measured on the old prompt and needs a re-run before it is quoted next to a new one.

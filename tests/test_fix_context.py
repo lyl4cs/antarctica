@@ -138,7 +138,7 @@ def test_prompt_carries_evidence(lhr_ev):
     p = llm.prompts[0]
     assert f"- {SITE}/js/vendor.js (wastes 293 KB, of 391 KB)" in p
     assert "Platform: Custom site + Shopify assets" in p
-    assert "What this audit measures: JS downloaded but not executed" in p
+    assert "What this audit measures: BYTES, not timing" in p
     assert "invent or change a folder" in p
 
 
