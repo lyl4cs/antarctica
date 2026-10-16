@@ -264,3 +264,41 @@ make is unaffected. Input tokens go up, which moves `cost_per_request_usd` and
 `tokens_per_sec`: about +80 input tokens on every prompt from the scoping rule, +200 on an
 `unused-javascript` prompt, and +310 on a cross-host one. Any previously reported figure
 was measured on the old prompt and needs a re-run before it is quoted next to a new one.
+
+## ADR 024: Reference fixes are drafted by a table and approved by a person
+
+**Context.** The eval grades every generated fix against a `reference_fix`: the remedy
+a person has confirmed is correct for that finding. Thirty of those written from a
+blank page is a weekend, which is why `core/evals/results/` was still empty months
+after the harness was finished. The metrics the harness reports are the ones quoted
+outside this repo, so the gap between "the harness exists" and "the harness has been
+run" was the real problem, not the harness.
+
+**Decision.** `build_cases` now writes a `reference_draft` next to every case, from a
+hand-written table keyed by audit id (`core/evals/references.py`), filled in with the
+resources that scan actually blamed. `scripts/review_cases` walks the drafts one at a
+time, showing the finding, the draft and the documentation page to check it against,
+and writes `reference_fix` only on a keystroke. There is no accept-all. `load_cases`
+raises on a case whose `reference_fix` is empty.
+
+**Why the draft is a table and not a model call.** Same reasoning as ADR 021. A table
+is deterministic, reviewable in a diff, and wrong in a way that is fixable for
+everyone at once. More to the point: if a model drafted the answer key, the eval would
+measure a model agreeing with itself, and the number would be worth nothing. The table
+is also why an audit with no entry drafts nothing. A plausible-looking guess is more
+dangerous than a blank, because a blank gets written and a guess gets skimmed.
+
+**Why the draft names the offending files.** A reference that could be pasted onto any
+site would accept a generic answer. The eval exists to catch generic answers.
+
+**What this does not change.** Not the methodology and not the meaning of any reported
+metric: same prompt, same judge, same with-RAG vs without-RAG comparison, same figures.
+It changes who writes the first draft of the answer key and adds a gate that refuses to
+grade against a missing one. A number produced before this ADR is still comparable to
+one produced after it, as long as the prompt itself has not moved (see ADR 023, which
+did move it).
+
+**The risk this accepts.** A reviewer can wave thirty drafts through without reading
+them, and the result would look exactly like a careful review. Nothing in the code can
+prevent that. What the code does is make it a deliberate act thirty times over rather
+than a default, and put the doc link in front of the reviewer every time.
