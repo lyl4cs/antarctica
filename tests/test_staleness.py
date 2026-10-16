@@ -62,7 +62,7 @@ def test_the_boundary_is_strictly_past_the_deadline():
 
 def test_naive_timestamps_do_not_raise():
     """An in-memory fixture may carry a naive datetime; Postgres rows do not."""
-    # noqa justified: the naive datetime IS the thing under test here.
+    # Intentionally tz-naive: that is the condition under test, hence the suppression.
     naive = Scan(id="s1", url="u", status="running", created_at=datetime(2026, 10, 16, 3, 0))  # noqa: DTZ001
     assert is_stale(naive, NOW) is True
 
