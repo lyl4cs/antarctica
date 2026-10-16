@@ -201,6 +201,58 @@ def _short(url: str, n: int = 80) -> str:
     return url if len(url) <= n else url[: n - 1] + "…"
 
 
+# ----------------------------------------------------------------- host scope --
+# WHY: a finding can be about a resource that is not served by the scanned page's
+# host at all. Scanning www.sn0wy.dev produced a text-compression finding about an
+# API response from a different host, and because the prompt only ever named the
+# PAGE's platform, the fix came back as nginx config for a service that runs
+# FastAPI on Cloud Run. The platform, its guidance and the placement line all
+# describe the page's host; none of them are true of someone else's.
+#
+# Strict host comparison, deliberately: api.example.com and www.example.com are
+# the same owner but not the same deployment, and that difference is the whole bug.
+# No attempt is made to tell "my other service" from "third party" - that needs a
+# public-suffix list to do correctly, and getting it wrong would reintroduce a
+# confident wrong answer. What we can state for certain is the host, so that is all
+# we state.
+
+
+def url_host(url: str) -> str | None:
+    """Lowercase hostname of a URL, or None if it has none."""
+    try:
+        return urlparse(url).hostname
+    except ValueError:
+        return None
+
+
+def foreign_host(page_url: str, offenders: list[Offender]) -> str | None:
+    """The one other host every offender is served from, or None.
+
+    Returns a host only when ALL offenders agree on a single host that differs from
+    the page's. A mixed finding (some on the page's host, some not) keeps the page's
+    platform guidance, because there it is still partly right; this exists for the
+    unambiguous case where none of it applies.
+    """
+    page = url_host(page_url)
+    if not page or not offenders:
+        return None
+    hosts = {h for h in (url_host(o.url) for o in offenders) if h}
+    if len(hosts) != 1:
+        return None
+    other = hosts.pop()
+    return None if other == page else other
+
+
+CROSS_HOST_PLACEMENT = (
+    "Not in this page's code. This resource is served from {host}, which is a "
+    "different host than the page that was scanned, so none of this site's own "
+    "build or server config controls it. The change belongs wherever {host} is "
+    "configured, and this audit cannot see that. If {host} is a service you run, "
+    "the fix goes in that service. If it is third-party, you probably cannot change "
+    "it, and the lever you do have is loading less of it or dropping it."
+)
+
+
 # ------------------------------------------------------------- audit guides --
 
 AUDIT_GUIDES = {
@@ -215,8 +267,16 @@ AUDIT_GUIDES = {
                         "(loading=\"lazy\"); never lazy-load the LCP image.",
     "render-blocking-resources": "CSS/JS in <head> delays first paint: inline critical "
                                  "CSS, defer/async scripts, load the rest later.",
-    "unused-javascript": "JS downloaded but not executed: code-split, remove dead "
-                         "libraries, or defer third-party scripts.",
+    "unused-javascript": "BYTES, not timing: JS was downloaded but not executed on this "
+                         "page. `defer` and `async` do NOT fix this and do not reduce "
+                         "unused bytes; they only change WHEN a script runs, and a "
+                         "`<script type=\"module\">` (what Vite, Next.js and most "
+                         "bundlers emit) is already deferred. For a first-party bundle "
+                         "the fix is to ship less of it: route- or component-level code "
+                         "splitting (dynamic `import()`, React.lazy) so other routes' "
+                         "code is a separate chunk, plus dropping unused dependencies. "
+                         "For a third-party script the fix is to remove it or load it "
+                         "only where it is used.",
     "unused-css-rules": "CSS rules that never apply on this page: purge or split "
                         "stylesheets per page.",
     "uses-text-compression": "Text responses sent uncompressed: enable gzip/brotli on the "
@@ -362,12 +422,21 @@ PLACEMENT: dict[str, dict[str, str]] = {
 }
 
 
-def placement(platform_id: str | None, audit_id: str) -> str:
+def placement(platform_id: str | None, audit_id: str, *, host: str | None = None) -> str:
     """Where a fix for this audit usually lives on this platform.
 
     Falls back platform-first: the platform's entry for this audit category, then
     that platform's `_default`, then the generic line. Always returns something.
+
+    `host` is the foreign host from `foreign_host()`, set only when every offending
+    resource is served from one host that is not the page's. The platform table is
+    keyed on what the PAGE is built with, so applying it to a resource on another
+    host is how "enable gzip in nginx" ends up aimed at a FastAPI service. When
+    `host` is set the answer is about that host instead, and still a fixed string
+    rather than anything the model produced (ADR 021).
     """
+    if host:
+        return CROSS_HOST_PLACEMENT.format(host=host)
     table = PLACEMENT.get(platform_id or "", PLACEMENT["custom"])
     category = AUDIT_CATEGORY.get(audit_id, "")
     return table.get(category) or table.get("_default") or GENERIC_PLACEMENT

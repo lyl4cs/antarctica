@@ -23,7 +23,14 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 
-from core.fixes.context import Offender, Platform, audit_guide, placement
+from core.fixes.context import (
+    Offender,
+    Platform,
+    audit_guide,
+    foreign_host,
+    placement,
+    url_host,
+)
 from core.fixes.verify import unverified_urls
 from core.llm import LLM, Completion
 from core.rag.retrieve import RetrievedChunk, Retriever
@@ -42,8 +49,12 @@ Rules:
 - Copy resource URLs exactly as listed above, character for character. Never
   invent or change a folder or filename. A new file you propose (e.g. a .webp
   version) goes in the SAME folder as the original.
-- Fit the fix to the detected platform; if the platform is unknown, give a plain
-  HTML/server fix.
+- The platform above describes the scanned page's own host. Fit the fix to it only
+  for resources served by that host; if the platform is unknown, give a plain
+  HTML/server fix. For a resource listed as served by a different host, the
+  platform tells you nothing about it: do not transfer the page's stack, web
+  server or hosting to it, and do not name a config file for a server you have not
+  been told it runs.
 - "Where to put it" above is already shown to the user. Write "fix" so it agrees
   with it, and never name a file inside their project that is not listed there:
   you have not seen their code.
@@ -107,9 +118,10 @@ def _guide_block(audit_id: str) -> str:
     return f"What this audit measures: {g}\n" if g else ""
 
 
-def _placement_block(platform: Platform | None, audit_id: str) -> str:
+def _placement_block(platform: Platform | None, audit_id: str, host: str | None = None) -> str:
     """The deterministic 'which file' line (see context.placement)."""
-    return f"Where to put it: {placement(platform.id if platform else None, audit_id)}\n"
+    where = placement(platform.id if platform else None, audit_id, host=host)
+    return f"Where to put it: {where}\n"
 
 
 def _platform_block(p: Platform | None) -> str:
@@ -119,9 +131,17 @@ def _platform_block(p: Platform | None) -> str:
     return f"Platform: {p.name} (evidence: {ev}). {p.guidance}\n"
 
 
-def _offenders_block(offenders: list[Offender]) -> str:
+def _offenders_block(offenders: list[Offender], page_url: str = "") -> str:
+    """The offending resources, each tagged with whether it is on the page's host.
+
+    The host tag is the fix for a specific failure: the model saw a list of URLs, was
+    told what the PAGE is built with, and silently assumed the two went together. For
+    a resource on another host they do not, so the host is stated per resource and
+    spelled out underneath when none of them belong to the page.
+    """
     if not offenders:
         return ""
+    page = url_host(page_url) if page_url else None
     lines = ["Offending resources (from the audit, worst first):"]
     for o in offenders:
         parts = []
@@ -131,7 +151,22 @@ def _offenders_block(offenders: list[Offender]) -> str:
             parts.append(f"{o.wasted_ms} ms")
         if o.total_kb is not None:
             parts.append(f"of {o.total_kb:.0f} KB")
+        host = url_host(o.url)
+        if page and host and host != page:
+            parts.append(f"served by {host}, NOT the scanned page's host {page}")
         lines.append(f"- {o.url}" + (f" ({', '.join(parts)})" if parts else ""))
+
+    other = foreign_host(page_url, offenders) if page_url else None
+    if other:
+        lines.append(
+            f"\nIMPORTANT: every resource above is served by {other}, not by {page}. "
+            f"The platform and guidance given for this page describe {page} only and "
+            f"say nothing about how {other} is built, served or configured. Do not "
+            f"assume {other} runs the same stack, the same web server or the same "
+            f"host. If you do not know what serves {other}, say the change belongs "
+            f"there and describe it in terms of the outcome needed, not a config file "
+            f"for a server you are guessing at."
+        )
     return "\n".join(lines) + "\n"
 
 
@@ -156,6 +191,9 @@ def suggest_fix(
     chunks: list[RetrievedChunk] = []
     if use_rag and retriever is not None:
         chunks = retriever.retrieve(f"{finding.title}. {finding.description}", k=k)
+    # Set only when every offender sits on one host that is not the page's, in which
+    # case the page's platform guidance does not describe this resource at all.
+    other_host = foreign_host(finding.url, finding.offenders)
     prompt = PROMPT.format(
         url=finding.url,
         audit_id=finding.audit_id,
@@ -164,8 +202,8 @@ def suggest_fix(
         savings=f"{finding.savings_ms:.0f} ms" if finding.savings_ms else "unknown",
         guide_block=_guide_block(finding.audit_id),
         platform_block=_platform_block(finding.platform),
-        placement_block=_placement_block(finding.platform, finding.audit_id),
-        offenders_block=_offenders_block(finding.offenders),
+        placement_block=_placement_block(finding.platform, finding.audit_id, other_host),
+        offenders_block=_offenders_block(finding.offenders, finding.url),
         sources_block=_sources_block(chunks),
     )
     completion = llm.complete(prompt, json_mode=True)
@@ -179,7 +217,8 @@ def suggest_fix(
         unverified_urls=unverified_urls(f"{fix}\n{code}", finding.url, finding.offenders),
         sources_used=[int(x) for x in data.get("sources_used", []) if str(x).isdigit()],
         used_rag=bool(chunks),
-        where=placement(finding.platform.id if finding.platform else None, finding.audit_id),
+        where=placement(finding.platform.id if finding.platform else None,
+                        finding.audit_id, host=other_host),
         retrieved=chunks,
         completion=completion,
     )
