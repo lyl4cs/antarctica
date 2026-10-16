@@ -22,11 +22,22 @@ Hit **Get AI fix** on any finding and Gemini writes a diagnosis, a fix, and a co
 
 It also tells you what the site is built on (Shopify, Next.js, WordPress, or nothing it recognizes), because the right fix for a Shopify theme is not the right fix for a hand-rolled site.
 
-## The part I'd want you to look at
+## The interesting problem
 
-The first version confidently told me to optimize `https://shopnovus.us/images/model-lifestyle.jpg`. That folder doesn't exist. The image was real, the path was invented, and nothing about the answer looked wrong.
+Early on, it told me to optimize this file:
 
-Telling the model not to invent paths helps and does not fix it. So every URL in a generated fix is now checked against the resources Lighthouse actually loaded. Same folder, new filename is fine. `hero.webp` next to the real `hero.jpg` is exactly what a "convert to WebP" fix should say. A folder the audit never saw gets flagged in the UI instead of being handed to you as fact.
+```
+https://shopnovus.us/images/model-lifestyle.jpg
+```
+
+The image was real. The `/images/` folder was not. The model made up a plausible path, and nothing about the answer looked wrong.
+
+You can tell a model not to invent paths. It helps. It does not fix it.
+
+So now every file path in a generated fix gets checked against the files Lighthouse actually loaded:
+
+- **Same folder, new filename?** Fine. `hero.webp` next to the real `hero.jpg` is exactly what a "convert to WebP" fix should say.
+- **A folder the audit never saw?** Flagged in the UI, instead of handed to you as fact.
 
 [`core/fixes/verify.py`](core/fixes/verify.py) · [`tests/test_fix_verify.py`](tests/test_fix_verify.py)
 
@@ -44,15 +55,25 @@ Telling the model not to invent paths helps and does not fix it. So every URL in
   <img src="docs/images/architecture.svg" alt="Browser to API on Cloud Run, which publishes to Pub/Sub, which pushes to the Lighthouse scanner; results in Neon Postgres; fixes from Gemini grounded by pgvector retrieval" width="900">
 </p>
 
-A scan is a queued job, not a long HTTP request: `POST /scans` returns immediately, Pub/Sub pushes the job to the scanner, and the browser polls. Failures retry with backoff and land in a dead-letter topic after five attempts. The scanner runs at concurrency 1 because one Chrome per container is all that fits, and `save_result` takes a row lock so a redelivered message can't write a scan twice.
+**A scan is a queued job, not a long request.** `POST /scans` returns straight away with an id, and the browser polls while a worker does the slow part. Running Chrome inside the web request would mean a 60 second HTTP call that dies on any timeout.
 
-The fix path retrieves the top 5 chunks from an index of web.dev and Chrome documentation (Vertex `text-embedding-005`, 768 dims, HNSW cosine index in pgvector), and shows only the sources the model actually cites.
+A few things that follow from that:
 
-Why each of these, and what the alternative was: [docs/DECISIONS.md](docs/DECISIONS.md).
+- **Retries.** If a scan fails, Pub/Sub redelivers it with backoff. After five tries it goes to a dead-letter topic instead of disappearing.
+- **One scan at a time per worker.** Chrome is heavy, and one per container is all that fits.
+- **A redelivered job can't double-write.** Saving a result takes a row lock first, so the second delivery sees the scan is already done and stops.
+
+**For the AI fix**, the finding is used to search a set of web.dev and Chrome performance docs, and the 5 best-matching chunks go into the prompt. Only sources the model actually cites get shown, so the links under a fix are the ones it used, not everything that was retrieved.
+
+Why each piece is built this way, and what I rejected: [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Does the retrieval actually help?
 
-That's a claim, so there's a harness that measures it. `core/evals` runs the same findings with and without RAG and reports accepted-fix rate against hand-written references, p95 latency, tokens/sec, and cost per request. A fix costs about $0.0007 and takes 3–5 seconds.
+"Grounding the model in real docs makes the fixes better" is a claim, so it gets measured instead of asserted.
+
+`core/evals` runs the same findings twice, once with retrieval and once without, and compares the answers against fixes written by hand. It reports how often a fix was good enough to accept, plus p95 latency, tokens per second, and cost per request.
+
+For reference, one fix costs about $0.0007 and takes 3 to 5 seconds.
 
 ## Run it locally
 
