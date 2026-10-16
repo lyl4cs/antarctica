@@ -74,6 +74,17 @@ def handle_push(
     attempts = store.start_attempt(scan_id)
     try:
         result = scan_fn(url)
+        # Saving is inside the try ON PURPOSE. It used to sit after the handler, and
+        # when a deploy went out ahead of its migration this line raised
+        # UndefinedColumn on every delivery. Because nothing caught it the worker
+        # returned a bare 500: no error written to the row, no log line of our own,
+        # attempts climbing to the subscription's delivery limit while every reader
+        # was told the scan was still "running". An hour of outage over a one-line
+        # schema error that the scan page could have displayed immediately.
+        #
+        # Writing the result is as much a way for a scan to fail as running it is,
+        # so it gets the same handling: retry, then record why and give up.
+        store.save_result(scan_id, result.report, result.raw, result.duration_ms)
     except Exception as e:  # noqa: BLE001 - any scan failure is retryable
         log.warning("scan %s attempt %s failed: %s", scan_id, attempts, e)
         if attempts >= get_settings().max_scan_attempts:
@@ -82,5 +93,4 @@ def handle_push(
         response.status_code = 500  # ask Pub/Sub to retry
         return {"status": "retry"}
 
-    store.save_result(scan_id, result.report, result.raw, result.duration_ms)
     return {"status": "done"}
