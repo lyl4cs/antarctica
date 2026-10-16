@@ -145,7 +145,9 @@ def test_prompt_carries_evidence(lhr_ev):
 def test_prompt_without_evidence_has_no_empty_sections():
     llm = ScriptedLLM([_reply()])
     suggest_fix(FindingInput(SITE, "x", "t"), llm, None, use_rag=False)
-    assert "Offending resources" not in llm.prompts[0]
+    # The section header itself, not the phrase: the prompt rules now name
+    # "Offending resources" when telling the model that block is untrusted data.
+    assert "Offending resources (from the audit" not in llm.prompts[0]
     assert "Platform:" not in llm.prompts[0]
 
 
