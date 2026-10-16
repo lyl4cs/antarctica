@@ -2260,3 +2260,191 @@ th {
   color: var(--faint);
   max-width: 62ch;
 }
+
+/* ---------------------------------------------------------- self-audit ----
+   The "sn0wy audited by sn0wy" timeline on a site history page
+   (components/SelfAudit.tsx). A vertical rail with one node per round, so the
+   steps read as a sequence rather than as a list of unrelated cards. The rail is
+   drawn on the <li> rather than as a border on the <ol> so the last step can stop
+   it short instead of trailing past the final node. */
+.selfaudit {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.selfaudit-intro {
+  margin: 0;
+  font-size: 15px;
+  color: var(--muted);
+}
+.selfaudit-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.selfaudit-step {
+  display: flex;
+  gap: 18px;
+  align-items: stretch;
+}
+.selfaudit-marker {
+  flex: 0 0 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* The rail itself: a line behind the dot, clipped at the first and last nodes. */
+  background: linear-gradient(var(--tick-soft), var(--tick-soft)) center / 2px 100% no-repeat;
+}
+.selfaudit-step:first-child .selfaudit-marker {
+  background-size: 2px calc(100% - 22px);
+  background-position: center bottom;
+}
+.selfaudit-step:last-child .selfaudit-marker {
+  background-size: 2px 22px;
+  background-position: center top;
+}
+.selfaudit-step:first-child:last-child .selfaudit-marker {
+  background-image: none;
+}
+.selfaudit-dot {
+  margin-top: 16px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 0 4px var(--ground);
+}
+/* A hollow ring, not a dashed border: at 14px a dash pattern renders as three or
+   four stray arcs and reads as a rendering bug rather than as "not filled in". */
+.selfaudit-step.is-pending .selfaudit-dot {
+  background: var(--ground);
+  border: 2px solid var(--tick);
+}
+.selfaudit-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-bottom: 14px;
+  padding: 20px 24px;
+  border-radius: 24px;
+  background: var(--white);
+  border: 1px solid var(--line);
+}
+.selfaudit-step.is-pending .selfaudit-body {
+  background: transparent;
+  border-style: dashed;
+}
+.selfaudit-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.selfaudit-score {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.selfaudit-score b {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.selfaudit-score.is-pending {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--faint);
+}
+.selfaudit-delta {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--white);
+  background: #3c4a55;
+}
+.selfaudit-delta.up {
+  background: var(--blue);
+}
+.selfaudit-delta.down {
+  background: #c2452d;
+}
+.selfaudit-titles {
+  min-width: 0;
+}
+.selfaudit-titles h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 650;
+  font-size: 19px;
+  letter-spacing: -0.01em;
+}
+.selfaudit-when {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--faint);
+}
+.selfaudit-detail {
+  margin: 12px 0 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+.selfaudit-evidence {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.selfaudit-evidence li {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  padding-left: 16px;
+  position: relative;
+}
+.selfaudit-evidence li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 6px;
+  height: 2px;
+  background: var(--tick);
+}
+.selfaudit-links {
+  margin: 14px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.selfaudit-links:empty {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .selfaudit-step {
+    gap: 12px;
+  }
+  .selfaudit-body {
+    padding: 16px 18px;
+  }
+  .selfaudit-head {
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .selfaudit-score b,
+  .selfaudit-score.is-pending {
+    font-size: 28px;
+  }
+}
