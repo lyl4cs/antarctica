@@ -89,3 +89,17 @@ describe("Home", () => {
     await waitFor(() => expect(loadRecent().map((r) => r.id)).toEqual(["new1"]));
   });
 });
+
+describe("Home and the self-audit showcase", () => {
+  it("does not carry the showcase: it lives on the history page only", () => {
+    // Deliberate placement, not an oversight. The home page already leads with the
+    // scan form and example reports; the self-audit belongs where someone has gone
+    // looking for how a site changed over time.
+    mockFetch(() => undefined);
+    renderHome();
+    expect(screen.queryByText(/audited by it/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/See it used on a real site/i)).not.toBeInTheDocument();
+    expect(document.querySelector(".selfaudit")).toBeNull();
+    expect(document.querySelector(".case-study")).toBeNull();
+  });
+});

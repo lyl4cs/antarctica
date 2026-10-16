@@ -18,7 +18,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, ApiError, type ScanSummary } from "../api";
-import { CASE_STUDY, EXAMPLES, hasCaseStudy } from "../examples";
+import { EXAMPLES } from "../examples";
 import { ArrowRightIcon, GlobeIcon, SpinnerIcon } from "../components/Icons";
 import { HeroIceberg } from "../components/Illustrations";
 import { ScoreChip } from "../components/ScoreChip";
@@ -222,31 +222,6 @@ function ExampleReports() {
   );
 }
 
-/**
- * The worked example, linking to the before/after compare. Hidden entirely until
- * both scans exist, because a case study with one half missing teaches nothing.
- */
-function CaseStudyCard() {
-  if (!hasCaseStudy()) return null;
-  return (
-    <section className="case-study" aria-labelledby="case-h">
-      <div className="section-head">
-        <h2 id="case-h">See it used on a real site</h2>
-      </div>
-      <Link
-        to={`/history?url=${encodeURIComponent(CASE_STUDY.url)}`}
-        className="case-row"
-      >
-        <span className="recent-meta">
-          <span className="recent-url">{CASE_STUDY.label}</span>
-          <span className="recent-when">{CASE_STUDY.note}</span>
-        </span>
-        <span className="case-cta">See the before and after</span>
-      </Link>
-    </section>
-  );
-}
-
 export function Home() {
   useTitle("");
   return (
@@ -286,7 +261,6 @@ export function Home() {
         </figure>
       </main>
       <RecentScans />
-      <CaseStudyCard />
       <ExampleReports />
     </>
   );

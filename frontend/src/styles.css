@@ -2230,29 +2230,6 @@ th {
   text-decoration: underline;
 }
 
-.case-study {
-  margin-top: 36px;
-}
-.case-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 18px 20px;
-  border-radius: 16px;
-  border: 1px solid var(--ice-panel-line);
-  background: var(--ice-panel);
-  text-decoration: none;
-  color: inherit;
-}
-.case-row:hover {
-  border-color: var(--blue);
-}
-.case-cta {
-  font-weight: 600;
-  color: var(--blue-deep);
-}
 .case-note {
   margin: 0 0 14px;
   padding: 12px 16px;
