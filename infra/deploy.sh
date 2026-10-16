@@ -27,8 +27,11 @@ else
 fi
 
 echo "== Build images with Cloud Build (no local Docker needed)"
+# CHROMIUM_VERSION pins the browser in the scanner image (see services/scanner/
+# Dockerfile). Unset means "whatever Debian ships today": fine for a first build,
+# but set it once you know the good version so a rebuild cannot move scores.
 gcloud builds submit --config=infra/cloudbuild.yaml \
-  --substitutions="_REPO=${REPO},_TAG=${TAG}" .
+  --substitutions="_REPO=${REPO},_TAG=${TAG},_CHROMIUM_VERSION=${CHROMIUM_VERSION:-}" .
 
 echo "== Deploy scanner (private: only Pub/Sub may call it)"
 gcloud run deploy antarctica-scanner --image="${REPO}/scanner:${TAG}" --region="$REGION" \
