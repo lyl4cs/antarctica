@@ -62,7 +62,7 @@ import {
   sourceLink,
 } from "../lib/format";
 import { useTitle } from "../lib/useTitle";
-import { useRescan } from "./ScanPage";
+import { useRescan } from "../lib/useRescan";
 
 /** The fixes endpoint covers at most the top 10 findings (services/api/main.py). */
 export const MAX_FIX_LIMIT = 10;

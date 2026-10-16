@@ -37,8 +37,8 @@ import {
   formatDuration,
   formatTime,
 } from "../lib/format";
-import { rememberScan } from "../lib/recentScans";
 import { mood, steps, ticks, type Phase } from "../lib/scanProgress";
+import { useRescan } from "../lib/useRescan";
 import { useTitle } from "../lib/useTitle";
 
 export const POLL_MS = 2000;
@@ -96,26 +96,6 @@ function useNow(active: boolean, everyMs = 500) {
     return () => clearInterval(iv);
   }, [active, everyMs]);
   return now;
-}
-
-/** POST /scans for the same URL, then go to the new scan. Used by Retry / Scan again. */
-export function useRescan() {
-  const navigate = useNavigate();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  async function rescan(url: string) {
-    setBusy(true);
-    setError(null);
-    try {
-      const s = await api.createScan(url);
-      rememberScan(s);
-      navigate(`/scans/${s.id}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't start a new scan.");
-      setBusy(false);
-    }
-  }
-  return { rescan, busy, error };
 }
 
 const COPY: Record<Phase, { title: (host: string) => string; chip: string; tone: string }> = {

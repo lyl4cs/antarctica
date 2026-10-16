@@ -37,7 +37,7 @@ import {
   type Delta,
 } from "../lib/format";
 import { useTitle } from "../lib/useTitle";
-import { useRescan } from "./ScanPage";
+import { useRescan } from "../lib/useRescan";
 
 type Slot = "before" | "after";
 
