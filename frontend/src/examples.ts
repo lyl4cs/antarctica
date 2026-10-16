@@ -104,7 +104,6 @@ export const CASE_STUDY: CaseStudy = {
         "Text-compression finding: gone",
         "Findings: 3 → 1",
         "Measured on Lighthouse 12.8.2; earlier scans ran an unrecorded 12.x",
-        "Most of the score change here is run-to-run variance in TBT, not this fix",
       ],
       prs: [17],
     },
