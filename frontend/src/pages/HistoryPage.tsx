@@ -18,6 +18,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { api, ApiError, type Report, type ScanSummary } from "../api";
 import { Explain } from "../components/Explain";
 import { CASE_STUDY, hasCaseStudy } from "../examples";
+import { SelfAudit } from "../components/SelfAudit";
 import { comparabilityProblems, hostSpeedGap } from "../lib/conditions";
 import { ArrowRightIcon, GlobeIcon, RetryIcon, SpinnerIcon } from "../components/Icons";
 import { ScoreChip } from "../components/ScoreChip";
@@ -485,6 +486,10 @@ function SiteHistory({ url }: { url: string }) {
 
   const failedCount = history.filter((h) => h.scan.status === "failed").length;
   const oldest = history[history.length - 1];
+  // Matched against the scans' own stored URLs rather than the query param, so a
+  // differently-spelled but equivalent URL ("sn0wy.dev", a trailing slash) still
+  // resolves to the same normalised history the API returned.
+  const isSelfAudit = hasCaseStudy() && history.some((h) => h.scan.url === CASE_STUDY.url);
 
   return (
     <main>
@@ -518,6 +523,8 @@ function SiteHistory({ url }: { url: string }) {
       ) : (
         <>
           <ScoreChart model={model} before={before} after={after} />
+
+          {isSelfAudit && <SelfAudit history={history} />}
 
           <section className="compare" aria-labelledby="compare-h">
             <div className="compare-intro">
