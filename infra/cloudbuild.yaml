@@ -1,8 +1,21 @@
+# Builds both images. The scanner takes CHROMIUM_VERSION so the browser can be
+# pinned the same way Lighthouse is (see services/scanner/Dockerfile). Empty means
+# "whatever Debian ships today", which is what it did before the pin existed.
 steps:
   - name: gcr.io/cloud-builders/docker
     args: ["build", "-f", "services/api/Dockerfile", "-t", "${_REPO}/api:${_TAG}", "."]
   - name: gcr.io/cloud-builders/docker
-    args: ["build", "-f", "services/scanner/Dockerfile", "-t", "${_REPO}/scanner:${_TAG}", "."]
+    args:
+      - build
+      - -f
+      - services/scanner/Dockerfile
+      - --build-arg
+      - CHROMIUM_VERSION=${_CHROMIUM_VERSION}
+      - -t
+      - ${_REPO}/scanner:${_TAG}
+      - .
+substitutions:
+  _CHROMIUM_VERSION: ""
 images:
   - "${_REPO}/api:${_TAG}"
   - "${_REPO}/scanner:${_TAG}"
