@@ -88,3 +88,42 @@ def test_deploy_script_forwards_the_version():
     """End of the chain: CHROMIUM_VERSION=... bash infra/deploy.sh has to reach
     the build. A pin nobody can set is not a pin."""
     assert "_CHROMIUM_VERSION=${CHROMIUM_VERSION:-}" in DEPLOY.read_text()
+
+
+# --------------------------------------------------- frontend security headers --
+# Vercel serves the React app, so its headers live in vercel.json rather than in
+# any code path a Python test can exercise. Checked as config, like the Dockerfile
+# above: the point is that nobody quietly drops one.
+
+def test_vercel_sets_the_security_headers():
+    import json
+
+    cfg = json.loads((ROOT / "frontend" / "vercel.json").read_text())
+    glob = next(r for r in cfg["headers"] if r["source"] == "/(.*)")
+    keys = {h["key"] for h in glob["headers"]}
+    assert {
+        "Content-Security-Policy", "X-Content-Type-Options", "Referrer-Policy",
+        "X-Frame-Options", "Strict-Transport-Security", "Permissions-Policy",
+    } <= keys
+
+
+def test_the_csp_allows_the_data_font_vite_inlines():
+    """Vite inlines assets under 4096 bytes and one woff2 subset lands under it,
+    so font-src 'self' alone silently drops a typeface in production. Found by
+    loading the built app under the real policy, not by reading the config."""
+    import json
+
+    cfg = json.loads((ROOT / "frontend" / "vercel.json").read_text())
+    csp = next(h["value"] for r in cfg["headers"] for h in r["headers"]
+               if h["key"] == "Content-Security-Policy")
+    assert "font-src 'self' data:" in csp
+
+
+def test_the_csp_closes_the_dangerous_defaults():
+    import json
+
+    cfg = json.loads((ROOT / "frontend" / "vercel.json").read_text())
+    csp = next(h["value"] for r in cfg["headers"] for h in r["headers"]
+               if h["key"] == "Content-Security-Policy")
+    for directive in ("default-src 'self'", "object-src 'none'", "frame-ancestors 'none'"):
+        assert directive in csp

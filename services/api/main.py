@@ -8,6 +8,12 @@ than this API, so browsers block its requests unless we answer with
 Access-Control-Allow-Origin. CORSMiddleware does that for the origins listed in
 CORS_ORIGINS only, never "*". See docs/DECISIONS.md, ADR 014.
 
+SECURITY HEADERS: this service answers a browser directly (it serves its own
+index.html at /), so the same headers the frontend sets on Vercel are set here.
+They cost nothing and they close the defaults: no sniffing a response into a
+different content type, no framing the page, no leaking the full URL as a
+referrer to another origin.
+
 COMPRESSION: Cloud Run does not compress responses for you, so JSON left here
 uncompressed and the frontend's own audit caught it. GZipMiddleware compresses any
 response over `minimum_size` bytes when the client sends Accept-Encoding: gzip, and
@@ -26,6 +32,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, HttpUrl
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from core.fixes.context import Offender, detect_platform, extract_offenders
 from core.fixes.suggest import FindingInput, suggest_fix
@@ -51,6 +58,35 @@ app.add_middleware(
     allow_headers=["content-type"],
 )
 app.add_middleware(GZipMiddleware, minimum_size=500)
+
+
+#: Set on every response. The CSP is for the one HTML page this service serves;
+#: an API response is JSON, where it costs nothing and guards against a browser
+#: being talked into rendering one.
+SECURITY_HEADERS = {
+    "x-content-type-options": "nosniff",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "x-frame-options": "DENY",
+    "strict-transport-security": "max-age=31536000; includeSubDomains",
+    "content-security-policy": (
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+        "frame-ancestors 'none'; base-uri 'self'; object-src 'none'"
+    ),
+}
+
+
+class SecurityHeaders(BaseHTTPMiddleware):
+    """Add SECURITY_HEADERS to every response, without overwriting an explicit one."""
+
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        for k, v in SECURITY_HEADERS.items():
+            response.headers.setdefault(k, v)
+        return response
+
+
+app.add_middleware(SecurityHeaders)
 
 
 @lru_cache
