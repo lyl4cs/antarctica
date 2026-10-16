@@ -71,8 +71,8 @@ export const CASE_STUDY: CaseStudy = {
       scanId: "9c1dfc0b-f7e4-41b5-bb3c-35b270bb0a1b",
       title: "Baseline",
       detail:
-        "The first scan of the site, before any of its own advice had been taken. " +
-        "Three findings, worth about 1.5 seconds and 63 KB between them.",
+        "The first scan, before any of its own advice had been taken. Three findings, " +
+        "worth about 1.5 seconds and 63 KB between them.",
       evidence: [
         "Render-blocking Google Fonts stylesheet: 1,533 ms",
         "Unused JavaScript: 59.6 KB",
@@ -83,10 +83,9 @@ export const CASE_STUDY: CaseStudy = {
       scanId: "7a52d4f2-a0a7-425b-b0ba-926e638a82b1",
       title: "Self-hosted fonts, split routes",
       detail:
-        "The three webfonts moved off fonts.googleapis.com and into the bundle, " +
-        "removing a blocking round trip to a second origin. The three inner routes " +
-        "became lazy chunks, so landing on the home page no longer downloads the " +
-        "report and history pages first.",
+        "The webfonts moved off fonts.googleapis.com into the bundle, removing a " +
+        "blocking round trip to a second origin. The three inner routes became lazy " +
+        "chunks, so the home page no longer ships them.",
       evidence: [
         "Render-blocking finding: gone",
         "Unused JavaScript: 59.6 KB → 47.8 KB",
@@ -98,10 +97,9 @@ export const CASE_STUDY: CaseStudy = {
       scanId: "",
       title: "Compress the API (merged, awaiting deploy)",
       detail:
-        "The remaining text-compression finding is not about this page at all: it is " +
-        "an API response from another host, which Cloud Run does not compress on its " +
-        "own. GZipMiddleware is merged and will take effect on the next deploy of the " +
-        "API image.",
+        "The last finding is not about this page at all: it is an API response on " +
+        "another host, which Cloud Run does not compress. GZipMiddleware is merged " +
+        "and takes effect on the next deploy of the API image.",
       evidence: ["Report payload compresses 43% in testing"],
       prs: [17],
     },

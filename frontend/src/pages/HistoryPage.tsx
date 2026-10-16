@@ -89,6 +89,11 @@ function SiteSearch() {
           </p>
         )}
       </form>
+
+      {/* The showcase belongs here, not only behind ?url=. This is the page someone
+          lands on when they type /history, and a case study nobody can find is not
+          a case study. It loads its own history, so this view stays dataless. */}
+      {hasCaseStudy() && <SelfAudit />}
     </main>
   );
 }

@@ -2069,9 +2069,20 @@ th {
   gap: 6px;
   justify-content: flex-end;
 }
+/* The hero stays a readable column, but the self-audit track underneath it needs
+   the full width to fit its columns, so the cap moves off the container and onto
+   the hero's own children. */
 .history-search {
-  max-width: 720px;
   padding: 28px 0 0;
+}
+.history-search > .eyebrow,
+.history-search > h1,
+.history-search > p,
+.history-search > form {
+  max-width: 720px;
+}
+.history-search > .selfaudit {
+  margin-top: 52px;
 }
 .history-search h1 {
   margin: 0 0 12px;
@@ -2262,11 +2273,13 @@ th {
 }
 
 /* ---------------------------------------------------------- self-audit ----
-   The "sn0wy audited by sn0wy" timeline on a site history page
-   (components/SelfAudit.tsx). A vertical rail with one node per round, so the
-   steps read as a sequence rather than as a list of unrelated cards. The rail is
-   drawn on the <li> rather than as a border on the <ol> so the last step can stop
-   it short instead of trailing past the final node. */
+   "sn0wy audited by sn0wy": one column per round, read left to right
+   (components/SelfAudit.tsx).
+
+   The track scrolls sideways rather than squeezing columns, because a timeline
+   that reflows into unreadable slivers once there are six rounds is worse than
+   one you scroll. Below 760px the columns stack: a horizontal scroll inside a
+   page is a poor way to read on a phone. */
 .selfaudit {
   display: flex;
   flex-direction: column;
@@ -2277,39 +2290,55 @@ th {
   font-size: 15px;
   color: var(--muted);
 }
-.selfaudit-steps {
+.selfaudit-track {
   list-style: none;
   margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-.selfaudit-step {
+  padding: 0 0 8px;
   display: flex;
   gap: 18px;
-  align-items: stretch;
+  overflow-x: auto;
+  /* Snap so a scrolled track never rests mid-column. */
+  scroll-snap-type: x proximity;
 }
-.selfaudit-marker {
-  flex: 0 0 14px;
+.selfaudit-step {
+  flex: 1 0 clamp(248px, 30%, 340px);
   display: flex;
   flex-direction: column;
+  scroll-snap-align: start;
+}
+
+/* The rail: a dot per round with the connecting line drawn through it. The line
+   is a background on the rail rather than a border on the track, so the first
+   and last columns can stop it short instead of it running off both ends. */
+.selfaudit-rail {
+  position: relative;
+  height: 14px;
+  margin-bottom: 14px;
+  display: flex;
   align-items: center;
-  /* The rail itself: a line behind the dot, clipped at the first and last nodes. */
-  background: linear-gradient(var(--tick-soft), var(--tick-soft)) center / 2px 100% no-repeat;
 }
-.selfaudit-step:first-child .selfaudit-marker {
-  background-size: 2px calc(100% - 22px);
-  background-position: center bottom;
+/* The connector runs from this round's dot to the next one. Absolutely positioned
+   and extended by the track's gap, so the line crosses the space between columns
+   instead of stopping at each card's edge and reading as a broken rail. It takes
+   no part in layout, so it cannot widen the track or cause a scrollbar. */
+.selfaudit-rail::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  right: -18px;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: var(--tick-soft);
 }
-.selfaudit-step:last-child .selfaudit-marker {
-  background-size: 2px 22px;
-  background-position: center top;
+.selfaudit-step:last-child .selfaudit-rail::before {
+  display: none;
 }
-.selfaudit-step:first-child:last-child .selfaudit-marker {
-  background-image: none;
-}
+/* Positioned so it paints above the connector: the rail's ::before is absolutely
+   positioned and would otherwise draw its line straight across the dot. */
 .selfaudit-dot {
-  margin-top: 16px;
+  position: relative;
+  z-index: 1;
   width: 14px;
   height: 14px;
   border-radius: 50%;
@@ -2322,41 +2351,43 @@ th {
   background: var(--ground);
   border: 2px solid var(--tick);
 }
-.selfaudit-body {
+
+.selfaudit-card {
   flex: 1 1 auto;
-  min-width: 0;
-  margin-bottom: 14px;
-  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 22px;
   border-radius: 24px;
   background: var(--white);
   border: 1px solid var(--line);
 }
-.selfaudit-step.is-pending .selfaudit-body {
+.selfaudit-step.is-pending .selfaudit-card {
   background: transparent;
   border-style: dashed;
 }
 .selfaudit-head {
   display: flex;
-  align-items: center;
-  gap: 16px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 .selfaudit-score {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  flex: 0 0 auto;
 }
 .selfaudit-score b {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 34px;
+  font-size: 36px;
   line-height: 1;
   letter-spacing: -0.02em;
 }
 .selfaudit-score.is-pending {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 34px;
+  font-size: 36px;
   line-height: 1;
   color: var(--faint);
 }
@@ -2375,29 +2406,26 @@ th {
 .selfaudit-delta.down {
   background: #c2452d;
 }
-.selfaudit-titles {
-  min-width: 0;
-}
-.selfaudit-titles h3 {
+.selfaudit-when {
   margin: 0;
+  font-size: 13px;
+  color: var(--faint);
+}
+.selfaudit-card h3 {
+  margin: 14px 0 0;
   font-family: var(--font-display);
   font-weight: 650;
   font-size: 19px;
   letter-spacing: -0.01em;
 }
-.selfaudit-when {
-  margin: 2px 0 0;
-  font-size: 13px;
-  color: var(--faint);
-}
 .selfaudit-detail {
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   font-size: 15px;
   line-height: 1.55;
   color: var(--ink-2);
 }
 .selfaudit-evidence {
-  margin: 12px 0 0;
+  margin: 14px 0 0;
   padding: 0;
   list-style: none;
   display: flex;
@@ -2406,25 +2434,30 @@ th {
 }
 .selfaudit-evidence li {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12.5px;
+  line-height: 1.45;
   color: var(--muted);
-  padding-left: 16px;
+  padding-left: 14px;
   position: relative;
 }
 .selfaudit-evidence li::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 7px;
+  top: 8px;
   width: 6px;
   height: 2px;
   background: var(--tick);
 }
+/* Pushed to the bottom so the links line up across columns of unequal height. */
 .selfaudit-links {
-  margin: 14px 0 0;
+  margin: 16px 0 0;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-soft);
   display: flex;
   flex-wrap: wrap;
-  gap: 18px;
+  gap: 16px;
   font-size: 14px;
   font-weight: 600;
 }
@@ -2432,19 +2465,25 @@ th {
   display: none;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 760px) {
+  .selfaudit-track {
+    flex-direction: column;
+    overflow-x: visible;
+    gap: 14px;
+  }
   .selfaudit-step {
-    gap: 12px;
+    flex: 1 1 auto;
   }
-  .selfaudit-body {
+  /* The rail reads as a sequence only while the columns sit side by side. Stacked,
+     the order is already obvious and a stray 100%-wide line just adds noise. */
+  .selfaudit-rail {
+    display: none;
+  }
+  .selfaudit-card {
     padding: 16px 18px;
-  }
-  .selfaudit-head {
-    align-items: flex-start;
-    gap: 12px;
   }
   .selfaudit-score b,
   .selfaudit-score.is-pending {
-    font-size: 28px;
+    font-size: 30px;
   }
 }

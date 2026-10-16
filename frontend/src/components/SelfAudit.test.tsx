@@ -3,10 +3,11 @@
  * what it must NOT do: invent a score, keep asserting one after the scan behind it
  * is gone, or let unshipped work read as a measured result.
  */
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import type { ScanSummary } from "../api";
+import { mockFetch } from "../test/http";
 import { CASE_STUDY } from "../examples";
 import { scoreDelta } from "../lib/format";
 import { SelfAudit, resolveSteps } from "./SelfAudit";
@@ -147,5 +148,46 @@ describe("SelfAudit", () => {
     const pr = screen.getByRole("link", { name: "PR #15" });
     expect(pr).toHaveAttribute("href", "https://github.com/lyl4cs/sn0wy/pull/15");
     expect(pr).toHaveAttribute("rel", expect.stringContaining("noreferrer"));
+  });
+});
+
+describe("SelfAudit without a history prop", () => {
+  it("loads the case study's own history, so it works on a page that has none", async () => {
+    // This is what lets the showcase sit on the bare /history landing page.
+    const fetchFn = mockFetch((u) =>
+      u.pathname === "/sites/scans" ? { body: historyFor([88, 96]) } : undefined,
+    );
+    render(
+      <MemoryRouter>
+        <SelfAudit />
+      </MemoryRouter>,
+    );
+    await waitFor(() => expect(screen.getByText("96")).toBeInTheDocument());
+    expect(screen.getByText("88")).toBeInTheDocument();
+    const asked = new URL(fetchFn.mock.calls[0][0] as string);
+    expect(asked.searchParams.get("url")).toBe(CASE_STUDY.url);
+  });
+
+  it("fetches nothing when the host page already supplied the history", () => {
+    const fetchFn = mockFetch(() => undefined);
+    renderAudit(historyFor([88, 96]));
+    expect(fetchFn).not.toHaveBeenCalled();
+    expect(screen.getByText("96")).toBeInTheDocument();
+  });
+
+  it("still tells the story when the history request fails", async () => {
+    // A dead API must not put an error box on a landing page; unknown scores are
+    // the honest degradation.
+    mockFetch(() => ({ status: 500, body: { detail: "down" } }));
+    render(
+      <MemoryRouter>
+        <SelfAudit />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: CASE_STUDY.steps[0].title })).toBeInTheDocument();
+    });
+    expect(screen.queryByText("88")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });
