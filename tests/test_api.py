@@ -130,3 +130,62 @@ def test_health_endpoint_not_healthz(ctx):
     client, _, _ = ctx
     assert client.get("/health").json() == {"ok": True}
     assert client.get("/healthz").status_code == 404
+
+
+# --- compression -----------------------------------------------------------------
+# Cloud Run does not compress responses, so GZipMiddleware does it (see main.py).
+# These assert on the wire behaviour: that the middleware fires for a payload worth
+# compressing, stays out of the way otherwise, and never corrupts the body.
+
+
+def test_large_response_is_gzipped(ctx, scan_result):
+    client, store, _ = ctx
+    scan_id = client.post("/scans", json={"url": "https://example.com"}).json()["id"]
+    store.save_result(scan_id, scan_result.report, scan_result.raw, scan_result.duration_ms)
+
+    res = client.get(f"/scans/{scan_id}/report", headers={"accept-encoding": "gzip"})
+
+    assert res.status_code == 200
+    assert res.headers["content-encoding"] == "gzip"
+    # The payload has to be over the 500-byte threshold or this test proves nothing.
+    assert len(res.content) > 500
+    # Body survives the round trip: httpx decompresses, so this is the real JSON.
+    assert res.json()["findings"][0]["audit_id"] == "unused-javascript"
+
+
+def test_small_response_is_not_gzipped(ctx):
+    client, _, _ = ctx
+    # /health is a few bytes, well under minimum_size: compressing it would add
+    # gzip framing to a 13-byte body and cost CPU per request for nothing.
+    res = client.get("/health", headers={"accept-encoding": "gzip"})
+    assert res.status_code == 200
+    assert "content-encoding" not in res.headers
+    assert res.json() == {"ok": True}
+
+
+def test_no_gzip_when_client_does_not_accept_it(ctx, scan_result):
+    client, store, _ = ctx
+    scan_id = client.post("/scans", json={"url": "https://example.com"}).json()["id"]
+    store.save_result(scan_id, scan_result.report, scan_result.raw, scan_result.duration_ms)
+
+    res = client.get(f"/scans/{scan_id}/report", headers={"accept-encoding": "identity"})
+
+    assert res.status_code == 200
+    assert "content-encoding" not in res.headers
+    assert res.json()["findings"][0]["audit_id"] == "unused-javascript"
+
+
+def test_gzip_keeps_cors_headers(ctx, scan_result):
+    """Ordering check: gzip is outermost, so a compressed response must still carry
+    the CORS headers CORSMiddleware added underneath it."""
+    client, store, _ = ctx
+    scan_id = client.post("/scans", json={"url": "https://example.com"}).json()["id"]
+    store.save_result(scan_id, scan_result.report, scan_result.raw, scan_result.duration_ms)
+
+    res = client.get(
+        f"/scans/{scan_id}/report",
+        headers={"accept-encoding": "gzip", "origin": "http://localhost:5173"},
+    )
+
+    assert res.headers["content-encoding"] == "gzip"
+    assert res.headers["access-control-allow-origin"] == "http://localhost:5173"
