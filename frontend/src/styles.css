@@ -49,9 +49,13 @@
   --queued-fg: #5b4a2e;
   --ready-green: #2e9a52;
 
-  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
-  --font-body: "Instrument Sans", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* "... Variable" is the family name the @fontsource-variable packages declare in
+     their @font-face rules (see main.tsx). The non-Variable name matches nothing
+     once the fonts are self-hosted, so these stacks would silently fall through to
+     system-ui. The plain names stay as a fallback for a cached Google-Fonts face. */
+  --font-display: "Bricolage Grotesque Variable", "Bricolage Grotesque", system-ui, sans-serif;
+  --font-body: "Instrument Sans Variable", "Instrument Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 
   --shadow-card: 0 20px 60px rgba(18, 32, 43, 0.06);
   color-scheme: light;

@@ -11,6 +11,11 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
+    // Vitest stubs CSS imports to "" by default, which also empties `?raw`.
+    // src/fonts.test.ts reads styles.css as text to check the font-family names
+    // against the installed @fontsource packages, so that one file is processed.
+    // (no `$` anchor: the module id carries the `?raw` query)
+    css: { include: [/styles\.css/] },
     setupFiles: ["./src/test/setup.ts"],
     restoreMocks: true,
     unstubGlobals: true,
