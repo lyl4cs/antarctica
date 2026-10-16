@@ -54,7 +54,7 @@ def policies(src: str) -> list[dict]:
     """The alert policy JSON documents, rendered out of their heredocs."""
     out = []
     for name in ("POLICY_UPTIME", "POLICY_SCAN"):
-        m = re.search(name + r"\" <<'JSON'\n(.*?)\nJSON", src, re.S)
+        m = re.search(name + r"\" <<'JSON'\n(.*?)\nJSON", src, re.DOTALL)
         assert m, f"{name} heredoc not found"
         # Quoted heredoc: bash writes these bytes verbatim, so the only
         # substitution the script makes is the channel placeholder.
