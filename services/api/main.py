@@ -7,6 +7,12 @@ CORS: the React frontend (frontend/, hosted on Vercel) lives on a different orig
 than this API, so browsers block its requests unless we answer with
 Access-Control-Allow-Origin. CORSMiddleware does that for the origins listed in
 CORS_ORIGINS only, never "*". See docs/DECISIONS.md, ADR 014.
+
+COMPRESSION: Cloud Run does not compress responses for you, so JSON left here
+uncompressed and the frontend's own audit caught it. GZipMiddleware compresses any
+response over `minimum_size` bytes when the client sends Accept-Encoding: gzip, and
+skips the rest, which matters because the report payload is the large one and the
+scan-status response the poller fetches every 2 s is not.
 """
 
 from __future__ import annotations
@@ -17,6 +23,7 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, HttpUrl
 
@@ -31,12 +38,19 @@ from services.common.queue import InMemoryPublisher, Publisher, PubSubPublisher
 from services.common.store import InMemoryStore, PostgresStore, Store
 
 app = FastAPI(title="Antarctica")
+# add_middleware prepends, so the LAST one added is the outermost: gzip wraps CORS and
+# compresses a response that already carries its Access-Control-* headers. Headers are
+# not compressed, so the browser still reads them; getting this backwards would gzip
+# the body before CORS ran and the preflight answer would still be correct, but keeping
+# CORS innermost means every response leaving here, errors included, has its headers
+# applied before anything touches the body.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=list(get_settings().cors_origins),
     allow_methods=["GET", "POST"],
     allow_headers=["content-type"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 
 @lru_cache
