@@ -23,7 +23,7 @@ import json
 import statistics
 import sys
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
 from core.fixes.context import Offender, platform_from_dict
@@ -71,7 +71,30 @@ class CaseResult:
 
 
 def load_cases(path: Path) -> list[Case]:
-    return [Case(**json.loads(line)) for line in path.read_text().splitlines() if line.strip()]
+    """Load an eval set, refusing one that isn't ready to be graded against.
+
+    A case with an empty `reference_fix` has no answer key, so every verdict on it
+    would be the judge comparing a fix against nothing. That used to be a comment
+    in the docs ("remove them before running"); forgetting is silent and produces a
+    number that looks real, so it is an error now.
+
+    Unknown keys are dropped rather than rejected: `build_cases` writes a
+    `reference_draft` alongside each case, and a draft file that is partly reviewed
+    is a normal state to be in.
+    """
+    keep = {f.name for f in fields(Case)}
+    cases = []
+    for n, line in enumerate(path.read_text().splitlines(), start=1):
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        if not str(row.get("reference_fix", "")).strip():
+            raise ValueError(
+                f"{path}:{n}: case {row.get('id')!r} has no reference_fix. Review it "
+                f"first: python -m scripts.review_cases {path}"
+            )
+        cases.append(Case(**{k: v for k, v in row.items() if k in keep}))
+    return cases
 
 
 def judge(llm: LLM, case: Case, s: FixSuggestion) -> tuple[bool, str]:
