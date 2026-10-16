@@ -209,6 +209,12 @@ export function ScanProgressView({ scan, now, hiccup }: { scan: Scan; now: numbe
           </p>
         )}
 
+        <p className="scan-measured">
+          Measured as a mid-range phone on a throttled connection, the same way Lighthouse and
+          PageSpeed Insights do by default. A desktop on fast wifi would score higher. The exact
+          settings are on the report.
+        </p>
+
         <div className="scan-facts">
           {scan.attempts > 0 && (
             <span>

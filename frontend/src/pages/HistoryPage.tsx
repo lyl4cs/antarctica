@@ -17,6 +17,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api, ApiError, type Report, type ScanSummary } from "../api";
 import { Explain } from "../components/Explain";
+import { CASE_STUDY, hasCaseStudy } from "../examples";
 import { comparabilityProblems, hostSpeedGap } from "../lib/conditions";
 import { ArrowRightIcon, GlobeIcon, RetryIcon, SpinnerIcon } from "../components/Icons";
 import { ScoreChip } from "../components/ScoreChip";
@@ -289,6 +290,7 @@ function Comparison({
   const as = after.performance_score;
   const sd = bs !== null && as !== null ? scoreDelta(bs, as) : null;
 
+  const isCaseStudy = hasCaseStudy() && before.scan.url === CASE_STUDY.url;
   const problems = comparabilityProblems(rb?.conditions, ra?.conditions);
   const hostGap = problems.length === 0 ? hostSpeedGap(rb?.conditions, ra?.conditions) : null;
 
@@ -311,6 +313,12 @@ function Comparison({
         )}
       </div>
       <div className="diff-table-wrap">
+        {isCaseStudy && (
+          <p className="case-note" role="note">
+            This is sn0wy's own test case: scanned, fixed using the suggestions it gave, then
+            scanned again. {CASE_STUDY.note}
+          </p>
+        )}
         {problems.length > 0 && (
           <div className="fix-warning" role="note">
             <strong>These two scans aren’t directly comparable.</strong> They weren’t measured the
