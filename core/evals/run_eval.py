@@ -23,6 +23,7 @@ import json
 import statistics
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
@@ -137,9 +138,20 @@ def summarize(results: list[CaseResult]) -> dict:
 
 
 def run(cases: list[Case], llm: LLM, judge_llm: LLM, retriever: Retriever | None,
-        k: int = 5) -> tuple[list[CaseResult], dict]:
-    results: list[CaseResult] = []
-    for case in cases:
+        k: int = 5, on_case: Callable[[int, int, Case], None] | None = None,
+        results: list[CaseResult] | None = None) -> tuple[list[CaseResult], dict]:
+    """Generate and judge every case in both arms.
+
+    `on_case` is called after each case so a caller can show progress: a run is
+    four network calls per case and prints nothing for ten minutes otherwise,
+    which is indistinguishable from a hang.
+
+    `results` lets the caller own the list. That way a run stopped partway
+    (Ctrl+C, a dropped connection) leaves the caller holding what finished
+    instead of losing the whole run.
+    """
+    results = [] if results is None else results
+    for n, case in enumerate(cases, start=1):
         finding = FindingInput(case.url, case.audit_id, case.title, case.description,
                                case.savings_ms,
                                offenders=[Offender(**o) for o in case.offenders],
@@ -150,6 +162,8 @@ def run(cases: list[Case], llm: LLM, judge_llm: LLM, retriever: Retriever | None
             c = s.completion
             results.append(CaseResult(case.id, use_rag, ok, reason, s.fix, c.tokens_in,
                                       c.tokens_out, c.latency_ms, c.cost_usd))
+        if on_case:
+            on_case(n, len(cases), case)
     return results, summarize(results)
 
 
@@ -163,12 +177,34 @@ def main() -> None:  # pragma: no cover - calls Vertex AI
     llm = VertexLLM(s.project_id, s.region, s.llm_model)
     retriever = Retriever(VertexEmbedder(s.project_id, s.region, s.embed_model),
                           PgVectorStore(s.database_url))
-    results, summary = run(cases, llm, llm, retriever)
+
+    started = time.perf_counter()
+
+    def progress(n: int, total: int, case: Case) -> None:
+        done = n / total
+        elapsed = time.perf_counter() - started
+        left = elapsed / done - elapsed
+        print(f"[{n:>3}/{total}] {case.audit_id:<28} {elapsed / 60:4.1f}m elapsed, "
+              f"~{left / 60:.0f}m left", flush=True)
+
+    results: list[CaseResult] = []
+    stopped = False
+    try:
+        run(cases, llm, llm, retriever, on_case=progress, results=results)
+    except KeyboardInterrupt:
+        # Partial results are still worth keeping: a stopped run is 20 minutes of
+        # calls, and the cases that finished are as valid as they were.
+        stopped = True
+        print("\ninterrupted, saving what finished", flush=True)
+
+    summary = summarize(results)
     out = Path("core/evals/results") / f"{time.strftime('%Y%m%d-%H%M%S')}.json"
-    out.write_text(json.dumps({"summary": summary, "results": [asdict(r) for r in results]},
-                              indent=2))
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(
+        {"summary": summary, "cases_file": sys.argv[1], "complete": not stopped,
+         "results": [asdict(r) for r in results]}, indent=2))
     print(json.dumps(summary, indent=2))
-    print(f"saved -> {out}")
+    print(f"saved -> {out}" + ("  (PARTIAL RUN, not a reportable number)" if stopped else ""))
 
 
 if __name__ == "__main__":  # pragma: no cover
