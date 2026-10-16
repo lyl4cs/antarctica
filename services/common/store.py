@@ -29,11 +29,25 @@ from services.common.models import (
     Stats,
     StoredFinding,
 )
+from services.common.staleness import settle_stale
 from services.scanner.parse import ParsedReport
 
 
 def _now() -> datetime:
     return datetime.now(UTC)
+
+
+
+def _stale_after_s() -> int:
+    """How long a scan may wait on the scanner before it reports as failed.
+
+    Read per call rather than captured at import: `get_settings` is uncached by
+    design in this codebase, so the value follows the environment and a test can
+    change SCAN_STALE_AFTER_S without reimporting anything.
+    """
+    from services.common.config import get_settings
+
+    return get_settings().scan_stale_after_s
 
 
 class Store(Protocol):
@@ -64,7 +78,8 @@ class InMemoryStore:
         return scan
 
     def get_scan(self, scan_id: str) -> Scan | None:
-        return self.scans.get(scan_id)
+        scan = self.scans.get(scan_id)
+        return settle_stale(scan, after_s=_stale_after_s()) if scan else None
 
     def start_attempt(self, scan_id: str) -> int:
         scan = self.scans[scan_id]
@@ -136,7 +151,7 @@ class InMemoryStore:
             (sc for sc in self.scans.values() if sc.url == url),
             key=lambda sc: sc.created_at, reverse=True,
         )[:limit]
-        return self._summaries(scans)
+        return self._summaries([settle_stale(sc, after_s=_stale_after_s()) for sc in scans])
 
 
 class PostgresStore:  # pragma: no cover - exercised against a real DB
@@ -155,7 +170,9 @@ class PostgresStore:  # pragma: no cover - exercised against a real DB
                 "created_at", "finished_at"]
         d = dict(zip(keys, r))
         d["id"] = str(d["id"])
-        return Scan(**d)
+        # Every Postgres read path builds its Scan here, so settling staleness at
+        # this one point covers get_scan, create_scan and the history summaries.
+        return settle_stale(Scan(**d), after_s=_stale_after_s())
 
     _SCAN_COLS = "id, url, status, attempts, error, duration_ms, created_at, finished_at"
 
