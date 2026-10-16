@@ -3,6 +3,11 @@
 # Usage: PROJECT_ID=my-antarctica REGION=us-central1 ./infra/deploy.sh
 # Optional: FRONTEND_ORIGIN=https://antarctica.vercel.app lets that browser origin call
 # the API (CORS). Several origins: FRONTEND_ORIGIN="https://a.vercel.app,https://b.dev"
+#
+# Before deploying anything this runs the test suite and checks that every
+# migration in db/migrations/ has been applied to DATABASE_URL. Set DATABASE_URL
+# for that check; SKIP_PREFLIGHT=1 bypasses both, which you should need roughly
+# never.
 set -euo pipefail
 : "${PROJECT_ID:?set PROJECT_ID}"
 REGION="${REGION:-us-central1}"
@@ -24,6 +29,28 @@ if [[ -n "${FRONTEND_ORIGIN:-}" ]]; then
   API_ENV="^@^PROJECT_ID=${PROJECT_ID}@REGION=${REGION}@CORS_ORIGINS=${FRONTEND_ORIGIN}"
 else
   echo "note: FRONTEND_ORIGIN not set; the API will only allow CORS from http://localhost:5173"
+fi
+
+# ---------------------------------------------------------------- preflight --
+# Nothing below is reversible in under a minute, so the cheap checks run first.
+# Skipping either of these is what turned a one-line schema error into an hour of
+# outage: set SKIP_PREFLIGHT=1 only when you know exactly why.
+if [[ "${SKIP_PREFLIGHT:-0}" != "1" ]]; then
+  echo "== Preflight: tests"
+  if ! python -m pytest -q; then
+    echo "deploy: tests failed, refusing to deploy. SKIP_PREFLIGHT=1 overrides." >&2
+    exit 1
+  fi
+
+  echo "== Preflight: database schema matches this checkout"
+  # Exit 2 (cannot check) is also a stop. A deploy you could not verify is exactly
+  # the one that caused the incident this check exists for.
+  if ! python infra/preflight.py; then
+    echo "deploy: schema check failed, refusing to deploy. SKIP_PREFLIGHT=1 overrides." >&2
+    exit 1
+  fi
+else
+  echo "note: SKIP_PREFLIGHT=1, deploying without running tests or checking the schema"
 fi
 
 echo "== Build images with Cloud Build (no local Docker needed)"
