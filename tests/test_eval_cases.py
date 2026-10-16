@@ -145,3 +145,24 @@ def test_ids_come_from_stdin_when_asked():
 
 def test_ids_otherwise_come_from_the_command_line():
     assert read_ids(["a", "b"], "ignored") == ["a", "b"]
+
+
+# ---------------------------------------------------------------- progress --
+
+def test_run_reports_progress_and_fills_the_caller_s_list():
+    """A run is four network calls per case and silent for ten minutes otherwise,
+    which looks exactly like a hang. The caller owning `results` is what lets a
+    stopped run keep the cases that finished."""
+    from core.evals.run_eval import Case, run
+    from core.llm import ScriptedLLM
+
+    cases = [Case(**promote(CASE, "x")),
+             Case(**promote({**CASE, "id": "case-002"}, "x"))]
+    seen: list[tuple[int, int, str]] = []
+    sink: list = []
+    llm = ScriptedLLM(['{"fix": "split it", "code": ""}'] * 8)
+    judge_llm = ScriptedLLM(['{"acceptable": true, "reason": "ok"}'] * 8)
+    run(cases, llm, judge_llm, None, on_case=lambda n, t, c: seen.append((n, t, c.id)),
+        results=sink)
+    assert seen == [(1, 2, "case-001"), (2, 2, "case-002")]
+    assert len(sink) == 4  # two cases, two arms each
